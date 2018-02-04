@@ -27,7 +27,7 @@ setup(
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
     install_requires=[],
     extras_require={
-        'dev': ['check-manifest'],
+        'dev': ['check-manifest', 'flake8'],
         'test': ['coverage'],
     },
     package_data={

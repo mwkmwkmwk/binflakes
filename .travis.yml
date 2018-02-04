@@ -1,0 +1,12 @@
+cache: pip
+language: python
+python:
+  - "3.6"
+  - "3.7-dev"
+  - "nightly"
+install: pip install . check-manifest docutils flake8
+script:
+  - check-manifest --ignore 'tests*'
+  - python setup.py check -m -r -s
+  - pytest
+  - flake8 .
