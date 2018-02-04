@@ -4,9 +4,10 @@ python:
   - "3.6"
   - "3.7-dev"
   - "nightly"
-install: pip install . check-manifest docutils flake8
+install: pip install . check-manifest docutils pytest-flake8 pytest-cov coveralls
 script:
-  - check-manifest --ignore 'tests*'
+  - check-manifest --ignore 'tests*,pytest.ini'
   - python setup.py check -m -r -s
   - pytest
-  - flake8 .
+after_success:
+  - coveralls

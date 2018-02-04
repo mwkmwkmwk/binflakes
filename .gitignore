@@ -1,4 +1,6 @@
 /binflakes.egg-info/
 /dist/
 /build/
+/.cache/
+/.coverage
 __pycache__/
