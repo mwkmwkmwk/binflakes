@@ -21,7 +21,7 @@ class BinInt(int):
 
     def __getitem__(self, idx):
         """Extracts a given bit or a range of bits, with python indexing
-        semantics.  Use ``extr`` to extract by position and width.
+        semantics.  Use ``extract`` to extract by position and width.
 
         Since BinInt is, conceptually, an infinite sequence of bits,
         it is an error to use negative indices.  However, it is fine
@@ -29,48 +29,46 @@ class BinInt(int):
         of bits -- a BigInt is returned in this case.  For finite
         sequences, a BinWord is returned.
         """
-        if isinstance(idx, slice):
-            step = 1 if idx.step is None else operator.index(idx.step)
-            if step == 0:
-                raise ValueError('step cannot be 0')
-            if step < 0 and idx.start is None:
-                raise ValueError('start cannot be None for reverse slicing')
-            start = 0 if idx.start is None else operator.index(idx.start)
-            stop = None if idx.stop is None else operator.index(idx.stop)
-            if start < 0:
-                raise ValueError(
-                    'indexing from the end doesn\'t make sense for a BinInt')
-            if stop is not None and stop < 0:
-                raise ValueError(
-                    'indexing from the end doesn\'t make sense for a BinInt')
-            if stop is None and step > 0:
-                if step == 1:
-                    return self >> start
-                bits = self.bit_length()
-                r = range(start, bits, step)
-                val = 0
-                for opos, ipos in enumerate(r):
-                    val |= (self >> ipos & 1) << opos
-                if self < 0:
-                    val |= -1 << len(r)
-                return BinInt(val)
-            else:
-                if stop is None:
-                    stop = -1
-                if step == 1:
-                    if stop < start:
-                        return BinWord(0, 0)
-                    return self.extr(start, stop - start)
-                else:
-                    r = range(start, stop, step)
-                    val = 0
-                    for opos, ipos in enumerate(r):
-                        val |= (self >> ipos & 1) << opos
-                    return BinWord(len(r), val)
+        if not isinstance(idx, slice):
+            return self.extract(idx, 1)
+        step = 1 if idx.step is None else operator.index(idx.step)
+        if step == 0:
+            raise ValueError('step cannot be 0')
+        if step < 0 and idx.start is None:
+            raise ValueError('start cannot be None for reverse slicing')
+        start = 0 if idx.start is None else operator.index(idx.start)
+        stop = None if idx.stop is None else operator.index(idx.stop)
+        if start < 0:
+            raise ValueError(
+                'indexing from the end doesn\'t make sense for a BinInt')
+        if stop is not None and stop < 0:
+            raise ValueError(
+                'indexing from the end doesn\'t make sense for a BinInt')
+        if stop is None and step > 0:
+            if step == 1:
+                return self >> start
+            bits = self.bit_length()
+            r = range(start, bits, step)
+            val = 0
+            for opos, ipos in enumerate(r):
+                val |= (self >> ipos & 1) << opos
+            if self < 0:
+                val |= -1 << len(r)
+            return BinInt(val)
         else:
-            return self.extr(idx, 1)
+            if stop is None:
+                stop = -1
+            if step == 1:
+                if stop <= start:
+                    return BinWord(0, 0)
+                return self.extract(start, stop - start)
+            r = range(start, stop, step)
+            val = 0
+            for opos, ipos in enumerate(r):
+                val |= (self >> ipos & 1) << opos
+            return BinWord(len(r), val)
 
-    def extr(self, pos, width):
+    def extract(self, pos, width):
         """Extracts a subword with a given width, starting from a given
         bit position.
         """
@@ -82,13 +80,13 @@ class BinInt(int):
             raise ValueError('extracting out of range')
         return BinWord(width, self >> pos, trunc=True)
 
-    def insrt(self, pos, val):
+    def insert(self, pos, val):
         """Returns a copy of this BinInt, with a given word inserted
         at a given position (ie. with bits pos:pos+len(val) replaced
-        bit bits from val).
+        with bits from val).
         """
         if not isinstance(val, BinWord):
-            raise TypeError('insrt needs a BinWord')
+            raise TypeError('insert needs a BinWord')
         pos = operator.index(pos)
         if pos < 0:
             raise ValueError('inserting out of range')

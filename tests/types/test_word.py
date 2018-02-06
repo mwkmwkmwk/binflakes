@@ -148,21 +148,21 @@ class TestBinWord(unittest.TestCase):
         assert a[1:4:-1] == BinWord(0, 0)
         assert a[4:0:-1] == BinWord(4, 0x8)
         assert a[4::-1] == BinWord(5, 0x18)
-        assert a.extr(0, 4) == BinWord(4, 0x3)
-        assert a.extr(4, 4) == BinWord(4, 0x2)
-        assert a.extr(8, 4) == BinWord(4, 0x1)
-        assert a.extr(8, 0) == BinWord(0, 0x0)
-        assert a.extr(BinWord(4, 4), BinWord(10, 4)) == BinWord(4, 0x2)
+        assert a.extract(0, 4) == BinWord(4, 0x3)
+        assert a.extract(4, 4) == BinWord(4, 0x2)
+        assert a.extract(8, 4) == BinWord(4, 0x1)
+        assert a.extract(8, 0) == BinWord(0, 0x0)
+        assert a.extract(BinWord(4, 4), BinWord(10, 4)) == BinWord(4, 0x2)
         with pytest.raises(ValueError):
-            a.extr(9, 4)
+            a.extract(9, 4)
         with pytest.raises(ValueError):
-            a.extr(-1, 4)
+            a.extract(-1, 4)
         with pytest.raises(ValueError):
-            a.extr(4, -1)
+            a.extract(4, -1)
         with pytest.raises(TypeError):
-            a.extr(object(), -1)
+            a.extract(object(), -1)
         with pytest.raises(TypeError):
-            a.extr(0, object())
+            a.extract(0, object())
 
     def test_bool(self):
         a = BinWord(0, 0)
@@ -483,14 +483,14 @@ class TestBinWord(unittest.TestCase):
         with pytest.raises(TypeError):
             BinWord.concat(a, object())
 
-    def test_insrt(self):
+    def test_insert(self):
         a = BinWord(12, 0x123)
-        assert a.insrt(0, BinWord(4, 0x5)) == BinWord(12, 0x125)
-        assert a.insrt(4, BinWord(4, 0x5)) == BinWord(12, 0x153)
-        assert a.insrt(8, BinWord(4, 0x5)) == BinWord(12, 0x523)
+        assert a.insert(0, BinWord(4, 0x5)) == BinWord(12, 0x125)
+        assert a.insert(4, BinWord(4, 0x5)) == BinWord(12, 0x153)
+        assert a.insert(8, BinWord(4, 0x5)) == BinWord(12, 0x523)
         with pytest.raises(TypeError):
-            a.insrt(0, 5)
+            a.insert(0, 5)
         with pytest.raises(ValueError):
-            a.insrt(-1, BinWord(4, 0x5))
+            a.insert(-1, BinWord(4, 0x5))
         with pytest.raises(ValueError):
-            a.insrt(9, BinWord(4, 0x5))
+            a.insert(9, BinWord(4, 0x5))

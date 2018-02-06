@@ -106,19 +106,19 @@ class TestBinInt(unittest.TestCase):
     def test_extr(self):
         a = BinInt(0x123)
         b = BinInt(-0x123)
-        assert a.extr(0, 4) == BinWord(4, 3)
-        assert b.extr(0, 4) == BinWord(4, 0xd)
-        assert a.extr(4, 4) == BinWord(4, 2)
-        assert b.extr(4, 4) == BinWord(4, 0xd)
-        assert a.extr(0, 0) == BinWord(0, 0)
+        assert a.extract(0, 4) == BinWord(4, 3)
+        assert b.extract(0, 4) == BinWord(4, 0xd)
+        assert a.extract(4, 4) == BinWord(4, 2)
+        assert b.extract(4, 4) == BinWord(4, 0xd)
+        assert a.extract(0, 0) == BinWord(0, 0)
         with pytest.raises(ValueError):
-            a.extr(0, -1)
+            a.extract(0, -1)
         with pytest.raises(ValueError):
-            a.extr(-1, 4)
+            a.extract(-1, 4)
         with pytest.raises(TypeError):
-            a.extr(object(), 4)
+            a.extract(object(), 4)
         with pytest.raises(TypeError):
-            a.extr(0, object())
+            a.extract(0, object())
 
     def test_type(self):
         a = BinInt(1)
@@ -172,10 +172,10 @@ class TestBinInt(unittest.TestCase):
         assert BinInt(-16).ceildiv(BinInt(-8)) == 2
         assert BinInt(-17).ceildiv(BinInt(-8)) == 3
 
-    def test_insrt(self):
-        assert BinInt(0x123).insrt(0, BinWord(4, 0x5)) == 0x125
-        assert BinInt(0x123).insrt(4, BinWord(4, 0x5)) == 0x153
+    def test_insert(self):
+        assert BinInt(0x123).insert(0, BinWord(4, 0x5)) == 0x125
+        assert BinInt(0x123).insert(4, BinWord(4, 0x5)) == 0x153
         with pytest.raises(TypeError):
-            BinInt(0x123).insrt(0, 5)
+            BinInt(0x123).insert(0, 5)
         with pytest.raises(ValueError):
-            BinInt(0x123).insrt(-1, BinWord(4, 0x5))
+            BinInt(0x123).insert(-1, BinWord(4, 0x5))

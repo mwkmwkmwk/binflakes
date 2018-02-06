@@ -24,7 +24,7 @@ import operator
 #   - highest bit set
 #   - highest bit not equal to sign
 # - population count
-# - carry-less mulitplication
+# - carry-less multiplication
 # - polynomial reduction (CRCs etc)
 #
 # A few of these also apply to BinInt.
@@ -59,9 +59,8 @@ class BinWord:
         val = BinInt(operator.index(val))
         if trunc:
             val &= self.mask
-        else:
-            if val & ~self.mask:
-                raise ValueError('value does not fit in mask')
+        elif val & ~self.mask:
+            raise ValueError('value does not fit in the given bit width')
         assert isinstance(val, BinInt)
         self._val = val
 
@@ -111,14 +110,14 @@ class BinWord:
 
     def __getitem__(self, idx):
         """Extracts a given bit or a range of bits, with python indexing
-        semantics.  Use ``extr`` to extract by position and width.
+        semantics.  Use ``extract`` to extract by position and width.
         """
         if isinstance(idx, slice):
             start, stop, step = idx.indices(self._width)
             if step == 1:
-                if stop < start:
+                if stop <= start:
                     return BinWord(0, 0)
-                return self.extr(start, stop - start)
+                return self.extract(start, stop - start)
             else:
                 r = range(start, stop, step)
                 val = 0
@@ -129,7 +128,7 @@ class BinWord:
             idx = operator.index(idx)
             if idx < 0:
                 idx += self._width
-            return self.extr(idx, 1)
+            return self.extract(idx, 1)
 
     def __bool__(self):
         """Converts a BinWord to a bool.  All words not equal to all-zeros
@@ -226,7 +225,7 @@ class BinWord:
         """Returns a one's complement of the BinWord (ie. inverts all bits)."""
         return BinWord(self._width, ~self._val, trunc=True)
 
-    def extr(self, pos, width):
+    def extract(self, pos, width):
         """Extracts a subword with a given width, starting from a given
         bit position.  It is an error to extract out-of-range bits.
         """
@@ -234,13 +233,13 @@ class BinWord:
         width = operator.index(width)
         if width < 0:
             raise ValueError('width must not be negative')
-        if pos < 0 or width + pos > self._width:
+        if pos < 0 or pos + width > self._width:
             raise ValueError('extracting out of range')
         return BinWord(width, self._val >> pos, trunc=True)
 
     def sext(self, width):
         """Sign-extends a word to a larger width.  It is an error to specify
-        a smaller width (use ``extr`` instead to crop off the extra bits).
+        a smaller width (use ``extract`` instead to crop off the extra bits).
         """
         width = operator.index(width)
         if width < self._width:
@@ -249,20 +248,20 @@ class BinWord:
 
     def zext(self, width):
         """Zero-extends a word to a larger width.  It is an error to specify
-        a smaller width (use ``extr`` instead to crop off the extra bits).
+        a smaller width (use ``extract`` instead to crop off the extra bits).
         """
         width = operator.index(width)
         if width < self._width:
             raise ValueError('zero extending to a smaller width')
         return BinWord(width, self._val)
 
-    def insrt(self, pos, val):
+    def insert(self, pos, val):
         """Returns a copy of this BinWord, with a given word inserted
         at a given position (ie. with bits pos:pos+len(val) replaced
         bit bits from val).
         """
         if not isinstance(val, BinWord):
-            raise TypeError('insrt needs a BinWord')
+            raise TypeError('insert needs a BinWord')
         pos = operator.index(pos)
         if pos < 0 or val._width + pos > self._width:
             raise ValueError('inserting out of range')
@@ -346,18 +345,19 @@ class BinWord:
         return cls(width, val)
 
     @property
-    def _width_hexits(self):
+    def _width_in_nibbles(self):
         return (self._width + 3) // 4
 
     def __repr__(self):
-        return f'BinWord({self._width}, 0x{self._val:0{self._width_hexits}x})'
+        val = f'0x{self._val:0{self._width_in_nibbles}x}'
+        return f'BinWord({self._width}, {val})'
 
     def __str__(self):
         """Returns a textual representation in the following format:
         ``#<width as a decimal number>x<value as a hexadecimal number>``.
         This format is directly accepted by the S-expression parser.
         """
-        return f'#{self._width}x{self._val:0{self._width_hexits}x}'
+        return f'#{self._width}x{self._val:0{self._width_in_nibbles}x}'
 
 
 from .int import BinInt # noqa
