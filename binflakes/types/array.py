@@ -76,6 +76,8 @@ class BinArray:
         """Initializes internal data representation of the BinArray to all-0.
         The internal data representation is simply tightly-packed bits of all
         words, starting from LSB, split into bytes and stored in a bytearray.
+        The unused trailing padding bits in the last byte must always be set
+        to 0.
         """
         self._width = width
         self._len = len_
