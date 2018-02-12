@@ -66,9 +66,9 @@ S-expressions are made of the following:
   - ``\\\\``, ``\\"``: represents a literal ``\\`` or ``"``.
   - ``\\a``, ``\\b``, ``\\t``, ``\\n``, ``\\f``, ``\\r``, ``\\e``: represent
     the usual control characters (``\\e`` is the ESCape character, ASCII 0x1b).
-  - ``\x[0-9]{2}``: a two-digit hexadecimal character code escape.
-  - ``\u[0-9]{4}``: a four-digit hexadecimal character code escape.
-  - ``\U[0-9]{6}``: a six-digit hexadecimal character code escape.
+  - ``\x[0-9a-fA-F]{2}``: a two-digit hexadecimal character code escape.
+  - ``\u[0-9a-fA-F]{4}``: a four-digit hexadecimal character code escape.
+  - ``\U[0-9a-fA-F]{6}``: a six-digit hexadecimal character code escape.
 
   All string constants are unicode.
 
