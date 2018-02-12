@@ -129,7 +129,8 @@ class BinArray:
         the array.  When assigning words, the assigned value must be
         a BinWord instance of the same width as the array, or an int
         or BinInt instance that will be automatically converted
-        to BinWord.
+        to BinWord.  It is an error if an int or BinInt is assigned
+        that does not fit in ``width`` bits.
         """
         if isinstance(idx, slice):
             if not isinstance(val, BinArray):
@@ -158,8 +159,8 @@ class BinArray:
             self._data[sbyte:ebyte] = raw.to_bytes(ebyte - sbyte, 'little')
 
     def __repr__(self):
-        width_hexits = BinInt(self._width).ceildiv(4)
-        fmt = f'0{width_hexits}x'
+        width_nibbles = BinInt(self._width).ceildiv(4)
+        fmt = f'0{width_nibbles}x'
         elems = ', '.join(f'0x{x.to_uint():{fmt}}' for x in self)
         return f'BinArray([{elems}], width={self._width})'
 
@@ -169,8 +170,8 @@ class BinArray:
         numbers>)``.  This format is directly accepted by the S-expression
         parser.
         """
-        width_hexits = BinInt(self._width).ceildiv(4)
-        fmt = f'0{width_hexits}x'
+        width_nibbles = BinInt(self._width).ceildiv(4)
+        fmt = f'0{width_nibbles}x'
         elems = ' '.join(format(x.to_uint(), fmt) for x in self)
         return f'#{self._width}x({elems})'
 
