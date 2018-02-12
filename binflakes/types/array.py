@@ -26,52 +26,51 @@ class BinArray:
     and item accesses return BinWord instances.
     """
 
-    def __init__(self, *args):
+    def __init__(self, data=None, *, width=None, length=None):
         """Creates a new BinArray.  The following forms are valid:
 
         - ``BinArray(bytes or bytearray)``: creates a BinArray of width 8
           with items from the given bytearray.
-        - ``BinArray(width)``: creates empty BinArray of given width.
-        - ``BinArray(width, length)``: creates a zero-filled BinArray of
+        - ``BinArray(BinArray instance)``: creates a copy of a BinArray.
+        - ``BinArray(width=w)``: creates empty BinArray of given width.
+        - ``BinArray(width=w, length=n)``: creates a zero-filled BinArray of
           given width and length.
-        - ``BinArray(width, iterable)``: creates a BinArray from the given
+        - ``BinArray(iterable, width=n)``: creates a BinArray from the given
           iterable of items.  Items should be ints, BinInts, or BinWords
           of the correct width.
+        - ``BinArray(iterable)``: creates a BinArray from a non-empty array
+          of BinWords.
         """
-        if len(args) == 1:
-            arg, = args
-            if isinstance(arg, (bytes, bytearray)):
-                self._width = 8
-                self._len = len(arg)
-                self._data = bytearray(arg)
-            else:
-                width = operator.index(arg)
-                if width < 0:
-                    raise ValueError('width cannot be negative')
-                self._init(width, 0)
-        elif len(args) == 2:
-            width, items = args
+        if data is not None and length is not None:
+            raise TypeError('data and length are mutually exclusive')
+        if data is None:
+            if length is None:
+                length = 0
+            if width is None:
+                raise TypeError('width not specified')
+            length = operator.index(length)
             width = operator.index(width)
             if width < 0:
                 raise ValueError('width cannot be negative')
-            try:
-                len_ = operator.index(items)
-            except TypeError:
-                try:
-                    len(items)
-                except TypeError:
-                    items = list(items)
-                self._init(width, len(items))
-                for i, x in enumerate(items):
-                    self[i] = x
-            else:
-                if len_ < 0:
-                    raise ValueError('length cannot be negative')
-                self._init(width, len_)
-        elif len(args) == 0:
-            raise TypeError('too few arguments to BinArray')
+            self._init(width, length)
         else:
-            raise TypeError('too many arguments to BinArray')
+            try:
+                len(data)
+            except TypeError:
+                data = list(data)
+            if width is None:
+                if isinstance(data, (bytes, bytearray)):
+                    width = 8
+                elif isinstance(data, BinArray):
+                    width = data.width
+                else:
+                    raise TypeError('width not specified')
+            width = operator.index(width)
+            if width < 0:
+                raise ValueError('width cannot be negative')
+            self._init(width, len(data))
+            for i, x in enumerate(data):
+                self[i] = x
 
     def _init(self, width, len_):
         """Initializes internal data representation of the BinArray to all-0.
@@ -110,7 +109,7 @@ class BinArray:
         if isinstance(idx, slice):
             start, stop, step = idx.indices(len(self))
             r = range(start, stop, step)
-            res = BinArray(self._width, len(r))
+            res = BinArray(width=self._width, length=len(r))
             for opos, ipos in enumerate(r):
                 res[opos] = self[ipos]
             return res
@@ -162,7 +161,7 @@ class BinArray:
         width_hexits = BinInt(self._width).ceildiv(4)
         fmt = f'0{width_hexits}x'
         elems = ', '.join(f'0x{x.to_uint():{fmt}}' for x in self)
-        return f'BinArray({self._width}, [{elems}])'
+        return f'BinArray([{elems}], width={self._width})'
 
     def __str__(self):
         """Returns a textual representation in the following format:
@@ -253,7 +252,7 @@ class BinArray:
 
     def __invert__(self):
         """Creates a new BinArray with all bits inverted."""
-        return BinArray(self._width, [~x for x in self])
+        return BinArray([~x for x in self], width=self._width)
 
     def __add__(self, other):
         """Concatenates two equal-width BinArray instances together, returning
@@ -264,7 +263,7 @@ class BinArray:
                 'argument to concatenation must be another BinArray')
         if self._width != other._width:
             raise ValueError('mismatched widths for concatenation')
-        res = BinArray(self._width, len(self) + len(other))
+        res = BinArray(width=self._width, length=len(self) + len(other))
         res[:len(self)] = self
         res[len(self):] = other
         return res
@@ -275,7 +274,7 @@ class BinArray:
         if count < 0:
             raise ValueError('negative repetition count')
         sl = len(self)
-        res = BinArray(self._width, sl * count)
+        res = BinArray(width=self._width, length=sl * count)
         for idx in range(count):
             res[idx * sl:(idx + 1) * sl] = self
         return res
