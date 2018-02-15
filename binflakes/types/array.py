@@ -157,7 +157,7 @@ class BinArray:
             sbyte, sbit, ebyte = self._locate(idx)
             raw = self._data[sbyte:ebyte]
             raw = BinInt.from_bytes(raw, 'little')
-            raw = raw.insert(sbit, val)
+            raw = raw.deposit(sbit, val)
             self._data[sbyte:ebyte] = raw.to_bytes(ebyte - sbyte, 'little')
 
     def __repr__(self):

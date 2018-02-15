@@ -80,16 +80,16 @@ class BinInt(int):
             raise ValueError('extracting out of range')
         return BinWord(width, self >> pos, trunc=True)
 
-    def insert(self, pos, val):
-        """Returns a copy of this BinInt, with a given word inserted
+    def deposit(self, pos, val):
+        """Returns a copy of this BinInt, with a given word deposited
         at a given position (ie. with bits pos:pos+len(val) replaced
         with bits from val).
         """
         if not isinstance(val, BinWord):
-            raise TypeError('insert needs a BinWord')
+            raise TypeError('deposit needs a BinWord')
         pos = operator.index(pos)
         if pos < 0:
-            raise ValueError('inserting out of range')
+            raise ValueError('depositing out of range')
         res = self
         res &= ~(val.mask << pos)
         res |= val.to_uint() << pos

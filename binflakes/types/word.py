@@ -255,16 +255,16 @@ class BinWord:
             raise ValueError('zero extending to a smaller width')
         return BinWord(width, self._val)
 
-    def insert(self, pos, val):
-        """Returns a copy of this BinWord, with a given word inserted
+    def deposit(self, pos, val):
+        """Returns a copy of this BinWord, with a given word deposited
         at a given position (ie. with bits pos:pos+len(val) replaced
         bit bits from val).
         """
         if not isinstance(val, BinWord):
-            raise TypeError('insert needs a BinWord')
+            raise TypeError('deposit needs a BinWord')
         pos = operator.index(pos)
         if pos < 0 or val._width + pos > self._width:
-            raise ValueError('inserting out of range')
+            raise ValueError('depositing out of range')
         res = self._val
         res &= ~(val.mask << pos)
         res |= val.to_uint() << pos

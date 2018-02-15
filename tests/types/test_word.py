@@ -483,14 +483,14 @@ class TestBinWord(unittest.TestCase):
         with pytest.raises(TypeError):
             BinWord.concat(a, object())
 
-    def test_insert(self):
+    def test_deposit(self):
         a = BinWord(12, 0x123)
-        assert a.insert(0, BinWord(4, 0x5)) == BinWord(12, 0x125)
-        assert a.insert(4, BinWord(4, 0x5)) == BinWord(12, 0x153)
-        assert a.insert(8, BinWord(4, 0x5)) == BinWord(12, 0x523)
+        assert a.deposit(0, BinWord(4, 0x5)) == BinWord(12, 0x125)
+        assert a.deposit(4, BinWord(4, 0x5)) == BinWord(12, 0x153)
+        assert a.deposit(8, BinWord(4, 0x5)) == BinWord(12, 0x523)
         with pytest.raises(TypeError):
-            a.insert(0, 5)
+            a.deposit(0, 5)
         with pytest.raises(ValueError):
-            a.insert(-1, BinWord(4, 0x5))
+            a.deposit(-1, BinWord(4, 0x5))
         with pytest.raises(ValueError):
-            a.insert(9, BinWord(4, 0x5))
+            a.deposit(9, BinWord(4, 0x5))
