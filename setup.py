@@ -28,7 +28,7 @@ setup(
     packages=find_packages(exclude=[
         'contrib', 'docs', 'docs.*', 'tests', 'tests.*',
     ]),
-    install_requires=[],
+    install_requires=['attrs>=17.4.0'],
     setup_requires=[
         'docutils',
         'pytest-runner',

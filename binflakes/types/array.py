@@ -170,14 +170,14 @@ class BinArray:
 
     def __str__(self):
         """Returns a textual representation in the following format:
-        ``#<width as a decimal number>x(<space-separated words as hexadecimal
+        ``<width as a decimal number>'0x(<space-separated words as hexadecimal
         numbers>)``.  This format is directly accepted by the S-expression
         parser.
         """
         width_nibbles = BinInt(self._width).ceildiv(4)
         fmt = f'0{width_nibbles}x'
         elems = ' '.join(format(x.to_uint(), fmt) for x in self)
-        return f'#{self._width}x({elems})'
+        return f'{self._width}\'0x({elems})'
 
     def __eq__(self, other):
         """Compares for equality with another object.  BinArrays are only
