@@ -6,7 +6,7 @@ python:
   - "nightly"
 install: pip install . check-manifest docutils pytest-flake8 pytest-cov coveralls
 script:
-  - check-manifest --ignore 'tests*,pytest.ini'
+  - check-manifest --ignore 'tests*,pytest.ini,.coveragerc'
   - python setup.py check -m -r -s
   - pytest
 after_success:

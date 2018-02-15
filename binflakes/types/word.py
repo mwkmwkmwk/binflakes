@@ -356,10 +356,10 @@ class BinWord:
 
     def __str__(self):
         """Returns a textual representation in the following format:
-        ``#<width as a decimal number>x<value as a hexadecimal number>``.
+        ``<width as a decimal number>'0x<value as a hexadecimal number>``.
         This format is directly accepted by the S-expression parser.
         """
-        return f'#{self._width}x{self._val:0{self._width_in_nibbles}x}'
+        return f'{self._width}\'0x{self._val:0{self._width_in_nibbles}x}'
 
 
 from .int import BinInt # noqa

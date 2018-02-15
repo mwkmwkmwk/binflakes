@@ -24,7 +24,7 @@ setup(
     ],
     keywords='binary parser disassembler',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    install_requires=[],
+    install_requires=['attrs>=17.4.0'],
     extras_require={
         'dev': ['check-manifest', 'flake8'],
         'test': ['coverage'],
