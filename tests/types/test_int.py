@@ -172,10 +172,10 @@ class TestBinInt(unittest.TestCase):
         assert BinInt(-16).ceildiv(BinInt(-8)) == 2
         assert BinInt(-17).ceildiv(BinInt(-8)) == 3
 
-    def test_insert(self):
-        assert BinInt(0x123).insert(0, BinWord(4, 0x5)) == 0x125
-        assert BinInt(0x123).insert(4, BinWord(4, 0x5)) == 0x153
+    def test_deposit(self):
+        assert BinInt(0x123).deposit(0, BinWord(4, 0x5)) == 0x125
+        assert BinInt(0x123).deposit(4, BinWord(4, 0x5)) == 0x153
         with pytest.raises(TypeError):
-            BinInt(0x123).insert(0, 5)
+            BinInt(0x123).deposit(0, 5)
         with pytest.raises(ValueError):
-            BinInt(0x123).insert(-1, BinWord(4, 0x5))
+            BinInt(0x123).deposit(-1, BinWord(4, 0x5))
