@@ -44,6 +44,8 @@ class BinWord:
     the MSB.
     """
 
+    __slots__ = '_width', '_val'
+
     def __init__(self, width, val, *, trunc=False):
         """Creates a word with a given width corresponding to a given
         unsigned integer value.
