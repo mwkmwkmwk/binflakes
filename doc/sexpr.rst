@@ -26,36 +26,37 @@ S-expressions are made of the following:
 
 - ``(`` (an opening paren) -- starts a list
 - ``)`` (a closing paren) -- ends a list
-- symbols: any string of characters from the set ``[a-zA-Z0-9*+=<>!?/.@$%_-]``
+- symbols: any string of characters from the set ``[a-zA-Z0-9*+=<>!?/.$%_-]``
   that does not start with a digit, or with a minus sign followed by a digit.
   Used to name variables, functions, and special forms.
-- the NULL constant: ``#nil``.
+- the NULL constant: ``@nil``.
 - boolean constants:
 
-  - ``#f``: false.
-  - ``#t``: true.
+  - ``@false``: false.
+  - ``@true``: true.
 
 - integer constants (converted to BinInt by the reader):
 
-  - ``-?[0-9]+``: a decimal number, eg. ``123``, ``-4``.
-  - ``#x-?[0-9a-fA-F]+``: a hexadecimal number, eg. ``#x1234``, ``#x-abcd``
+  - ``-?([1-9][0-9]*|0)``: a decimal number, eg. ``123``, ``-4``. Note that
+    numbers starting with 0 (except 0 itself) are not allowed.
+  - ``-?0x[0-9a-fA-F]+``: a hexadecimal number, eg. ``0x1234``, ``-0xabcd``
     (same as ``-43981``).
-  - ``#o-?[0-7]+``: an octal number, eg. ``#o664``.
-  - ``#b-?[01]+``: a binary number, eg. ``#b1101``.
+  - ``-?0o[0-7]+``: an octal number, eg. ``0o664``.
+  - ``-?0b[01]+``: a binary number, eg. ``0b1101``.
 
 - binary word constants (converted to BinWord by the reader):
 
-  - ``#[0-9]+x-?[0-9a-fA-F]+``: a hexadecimal number converted to a word
-    of the specified width, eg. ``#32xdeadbeef`` (a 32-bit word).
-  - ``#[0-9]+d-?[0-9]+``: a decimal number, eg. ``#12d123``
-    (same as ``#12x07b``), ``#12d-123`` (same as ``#12xf85``).
-  - ``#[0-9]+o-?[0-7]+``: an octal number, eg. ``#12o664`` (same as
-    ``#12x1b4``).
-  - ``#[0-9]+b-?[01]+``: a binary number, eg. ``#4b0110`` (same as
-    ``#4x6``).
+  - ``[0-9]+'-?0x[0-9a-fA-F]+``: a hexadecimal number converted to a word
+    of the specified width, eg. ``32'0xdeadbeef`` (a 32-bit word).
+  - ``[0-9]+'-?[0-9]+``: a decimal number, eg. ``12'123``
+    (same as ``12'0x07b``), ``12'-123`` (same as ``12'0xf85``).
+  - ``[0-9]+'-?0o[0-7]+``: an octal number, eg. ``12'0o664`` (same as
+    ``12'0x1b4``).
+  - ``[0-9]+'-?0b[01]+``: a binary number, eg. ``4'0b0110`` (same as
+    ``4'0x6``).
 
   Positive numbers must be smaller than ``2**width``.  Negative numbers
-  must be at least ``-2**width`` (ie. it is allowed to specify a negative
+  must be at least ``-2**width`` (i.e. it is allowed to specify a negative
   number that would wrap to positives if interpreted as a signed int
   of the given width, but not to specify a number that would wrap all
   the way back to negatives or further).
@@ -74,17 +75,17 @@ S-expressions are made of the following:
 
 - binary array constants (converted to BinArray by the reader):
 
-  - ``#[0-9]+x(<hex-number>*)``: a BinArray with every word written
-    as a hexadecimal number, eg. ``#12x(123 456 abc)``.  Line comments
+  - ``[0-9]+'0x(<hex-number>*)``: a BinArray with every word written
+    as a hexadecimal number, eg. ``12'0x(123 456 abc)``.  Line comments
     are allowed between individual elements.
-  - ``#[0-9]+d(<dec-number>*)``, likewise for decimal numbers, eg.
-    ``#10d(123 456)`` (equivalent to ``#10x(07b 1c8)``).
-  - ``#[0-9]+o(<oct-number>*)``: likewise for octal numbers.
-  - ``#[0-9]+b(<bin-number>*)``: likewise for binary numbers.
-  - ``#[0-9]+"<char|escape>*"``: the chars and escapes are parsed as
+  - ``[0-9]+'(<dec-number>*)``, likewise for decimal numbers, eg.
+    ``10'(123 456)`` (equivalent to ``10'0x(07b 1c8)``).
+  - ``[0-9]+'0o(<oct-number>*)``: likewise for octal numbers.
+  - ``[0-9]+'0b(<bin-number>*)``: likewise for binary numbers.
+  - ``[0-9]+'"<char|escape>*"``: the chars and escapes are parsed as
     in a string constant, then each resulting character code is
     converted to a word of the given width, and the words concatenated
-    to a BinArray.  For example, ``#8"abc"`` is the same as ``#8x(61 62 63)``.
+    to a BinArray.  For example, ``8'"abc"`` is the same as ``8'0x(61 62 63)``.
 
   The range of allowed numbers is the same as for binary word constants.
 
