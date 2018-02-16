@@ -12,6 +12,7 @@ class BinInt(int):
     For negative numbers, all bits from a certain point are equal to 1
     (following two's complement convention).
     """
+
     __slots__ = ()
 
     @classmethod

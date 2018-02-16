@@ -26,6 +26,8 @@ class BinArray:
     and item accesses return BinWord instances.
     """
 
+    __slots__ = '_width', '_len', '_data'
+
     def __init__(self, data=None, *, width=None, length=None):
         """Creates a new BinArray.  The following forms are valid:
 
