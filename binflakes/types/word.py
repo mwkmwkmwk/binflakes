@@ -362,4 +362,4 @@ class BinWord:
         return f'#{self._width}x{self._val:0{self._width_in_nibbles}x}'
 
 
-from .int import BinInt # noqa
+from .int import BinInt  # noqa: E402

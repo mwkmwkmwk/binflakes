@@ -170,4 +170,4 @@ class BinInt(int):
         return -(-self // other)
 
 
-from .word import BinWord # noqa
+from .word import BinWord  # noqa: E402
