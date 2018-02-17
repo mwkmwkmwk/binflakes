@@ -285,3 +285,198 @@ class BinArray:
         return res
 
     __rmul__ = __mul__
+
+    def repack(self, to_width, *, msb_first, start=0, start_bit=0,
+               length=None):
+        """Extracts a part of a BinArray's data and converts it to a BinArray
+        of a different width.
+
+        For the purposes of this conversion, words in this BinArray are joined
+        side-by-side, starting from a given start index (defaulting to 0),
+        skipping ``start_bit`` first bits of the first word, then the resulting
+        stream is split into ``to_width``-sized words and ``length`` first
+        such words are returned as a new BinArray.
+
+        If ``msb_first`` is False, everything proceeds with little endian
+        ordering: the first word provides the least significant bits of the
+        combined stream, ``start_bit`` skips bits starting from the LSB,
+        and the first output word is made from the lowest bits of the combined
+        stream.  Otherwise (``msb_first`` is True), everything proceeds
+        with big endian ordering: the first word provides the most
+        significant bits of the combined stream, ``start_bit`` skips bits
+        starting from the MSB, and the first output word is made from the
+        highest bits of the combined stream.
+
+        ``start_bits`` must be smaller than the width of the input word.
+        It is an error to request a larger length than can be provided from
+        the input array.  If ``length`` is not provided, this function
+        returns as many words as can be extracted.
+
+        For example, consider a 10-to-3 repack with start_bit=2, length=4
+        msb_first=True:
+
+        +---------+-+-+-+-+-+-+-+-+-+-+
+        |         | MSB ... LSB       |
+        +---------+-+-+-+-+-+-+-+-+-+-+
+        |         | ...               |
+        +---------+-+-+-+-+-+-+-+-+-+-+
+        | start   |X|X|a|b|c|d|e|f|g|h|
+        +---------+-+-+-+-+-+-+-+-+-+-+
+        | start+1 |i|j|k|l|X|X|X|X|X|X|
+        +---------+-+-+-+-+-+-+-+-+-+-+
+        |         | ...               |
+        +---------+-+-+-+-+-+-+-+-+-+-+
+
+        is repacked to:
+
+        +-+-+-+-+
+        |0|a|b|c|
+        +-+-+-+-+
+        |1|d|e|f|
+        +-+-+-+-+
+        |2|g|h|i|
+        +-+-+-+-+
+        |3|j|k|l|
+        +-+-+-+-+
+
+        The same repack for msb_first=False is performed as follows:
+
+        +---------+-+-+-+-+-+-+-+-+-+-+
+        |         | MSB ... LSB       |
+        +---------+-+-+-+-+-+-+-+-+-+-+
+        |         | ...               |
+        +---------+-+-+-+-+-+-+-+-+-+-+
+        | start   |h|g|f|e|d|c|b|a|X|X|
+        +---------+-+-+-+-+-+-+-+-+-+-+
+        | start+1 |X|X|X|X|X|X|l|k|j|i|
+        +---------+-+-+-+-+-+-+-+-+-+-+
+        |         | ...               |
+        +---------+-+-+-+-+-+-+-+-+-+-+
+
+        into:
+
+        +-+-+-+-+
+        |0|c|b|a|
+        +-+-+-+-+
+        |1|f|e|d|
+        +-+-+-+-+
+        |2|i|h|g|
+        +-+-+-+-+
+        |3|l|k|j|
+        +-+-+-+-+
+        """
+        to_width = operator.index(to_width)
+        if not isinstance(msb_first, bool):
+            raise TypeError('msb_first must be a bool')
+        available = self.repack_data_available(
+                to_width, start=start, start_bit=start_bit)
+        if length is None:
+            length = available
+        else:
+            length = operator.index(length)
+            if length > available:
+                raise ValueError('not enough data available')
+            if length < 0:
+                raise ValueError('length cannot be negative')
+        start = operator.index(start)
+        start_bit = operator.index(start_bit)
+        pos = start
+        accum = BinWord(0, 0)
+        if start_bit:
+            accum = self[pos]
+            pos += 1
+            rest = accum.width - start_bit
+            if msb_first:
+                accum = accum.extract(0, rest)
+            else:
+                accum = accum.extract(start_bit, rest)
+        res = BinArray(width=to_width, length=length)
+        for idx in range(length):
+            while len(accum) < to_width:
+                cur = self[pos]
+                pos += 1
+                if msb_first:
+                    accum = BinWord.concat(cur, accum)
+                else:
+                    accum = BinWord.concat(accum, cur)
+            rest = accum.width - to_width
+            if msb_first:
+                cur = accum.extract(rest, to_width)
+                accum = accum.extract(0, rest)
+            else:
+                cur = accum.extract(0, to_width)
+                accum = accum.extract(to_width, rest)
+            res[idx] = cur
+        return res
+
+    def repack_source_required(src_width, to_width, length, *, start_bit=0):
+        """Calculates how many source words would be read for an invocation of
+        repack with a given length, including possible partial words at
+        the beginning and the end of the repack source.  This can be called
+        either on a concrete BinArray instance (assuming its width as the
+        source width), or on the BinArray class (providing the source width
+        as an extra first argument).  This function doesn't take ``start``
+        or ``msb_first`` parameters, since they wouldn't affect the
+        computation.
+        """
+        if isinstance(src_width, BinArray):
+            src_width = src_width._width
+        src_width = operator.index(src_width)
+        to_width = operator.index(to_width)
+        length = operator.index(length)
+        start_bit = operator.index(start_bit)
+        if src_width <= 0:
+            raise ValueError('source width must be positive')
+        if to_width <= 0:
+            raise ValueError('destination width must be positive')
+        if length < 0:
+            raise ValueError('length must not be negative')
+        if start_bit not in range(src_width):
+            raise ValueError('start bit must be in [0, src_width)')
+        return BinInt(start_bit + to_width * length).ceildiv(src_width)
+
+    def repack_data_available(src_width, to_width, *, src_length=None,
+                              start=None, start_bit=0):
+        """Calculates the maximum number of words that can be requested
+        from a repack invocation with the given settings.
+
+        This function can be called either on a BinArray instance (assuming
+        its width as the source width), or on the BinArray class (passing
+        the source width as an extra first argument).  If called in the
+        second form, ``src_length`` must be provided.  Otherwise, it will
+        default to the number of words in the source array from the given
+        ``start`` index (defaulting to 0) until the end.
+        """
+        start_bit = operator.index(start_bit)
+        if isinstance(src_width, BinArray):
+            self = src_width
+            if src_length is None:
+                if start is None:
+                    start = 0
+                else:
+                    start = operator.index(start)
+                    if start < 0:
+                        raise ValueError('start must not be negative')
+                src_length = len(self) - start
+                start = None
+            src_width = self.width
+        if src_length is None:
+            raise TypeError('no length given')
+        if start is not None:
+            raise TypeError('start is redundant with explicit src_length')
+        src_width = operator.index(src_width)
+        to_width = operator.index(to_width)
+        src_length = operator.index(src_length)
+        start_bit = operator.index(start_bit)
+        if src_width <= 0:
+            raise ValueError('source width must be positive')
+        if to_width <= 0:
+            raise ValueError('destination width must be positive')
+        if src_length < 0:
+            raise ValueError('src_length must not be negative')
+        if start_bit not in range(src_width):
+            raise ValueError('start bit must be in [0, src_width)')
+        if src_length == 0 and start_bit != 0:
+            raise ValueError(
+                    'src_length must be positive if start_bit is not zero')
+        return (src_width * src_length - start_bit) // to_width
