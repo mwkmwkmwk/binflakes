@@ -284,7 +284,7 @@ class BinArray:
 
     __rmul__ = __mul__
 
-    def repack(self, to_width, *, from_msb, length=None, start=0, start_bit=0):
+    def repack(self, to_width, *, from_msb, start=0, start_bit=0, length=None):
         """Extracts a part of a BinArray's data and converts it to a BinArray
         of a different width.
 
