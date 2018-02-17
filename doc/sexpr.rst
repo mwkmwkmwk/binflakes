@@ -8,18 +8,18 @@ syntax can also be used for generic data serialization (like JSON).
 
 S-expressions are made of the following:
 
-- single-line comments, starting with ``;``
-- commented-out expressions: ``#; <arbitrary S-expression>`` -- makes
+- single-line comments, starting with ``# `` (hash followed by a space)
+- commented-out expressions: ``## <arbitrary S-expression>`` -- makes
   the reader parse a complete sub-expression and discard it.  Can be used
   to temporarily disable a single element of a list.  For example::
 
     (abc
      (def 1 2 3)
-     #; (ghi
+     ## (ghi
        4
        (5 6)
        7)
-     (jkl #;8 9)
+     (jkl ## 8 9)
     )
 
   parses the same as ``(abc (def 1 2 3) (jkl 9))``.
@@ -99,4 +99,4 @@ S-expressions are made of the following:
 
 .. note::
 
-  The following ASCII characters are reserved for now: ``:~`',^&|\\[]{}``.
+  The following ASCII characters are reserved for now: ``:~`',^&|\\[]{};``.
