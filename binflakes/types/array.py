@@ -284,7 +284,7 @@ class BinArray:
 
     __rmul__ = __mul__
 
-    def repack(self, to_width, *, from_msb, start=0, start_bit=0, length=None):
+    def repack(self, to_width, *, msb_first, start=0, start_bit=0, length=None):
         """Extracts a part of a BinArray's data and converts it to a BinArray
         of a different width.
 
@@ -294,11 +294,11 @@ class BinArray:
         stream is split into ``to_width``-sized words and ``length`` first
         such words are returned as a new BinArray.
 
-        If ``from_msb`` is False, everything proceeds with little endian
+        If ``msb_first`` is False, everything proceeds with little endian
         ordering: the first word provides the least significant bits of the
         combined stream, ``start_bit`` skips bits starting from the LSB,
         and the first output word is made from the lowest bits of the combined
-        stream.  Otherwise (``from_msb`` is True), everything proceeds
+        stream.  Otherwise (``msb_first`` is True), everything proceeds
         with big endian ordering: the first word provides the most
         significant bits of the combined stream, ``start_bit`` skips bits
         starting from the MSB, and the first output word is made from the
@@ -310,7 +310,7 @@ class BinArray:
         returns as many words as can be extracted.
 
         For example, consider a 10-to-3 repack with start_bit=2, length=4
-        from_msb=True:
+        msb_first=True:
 
         +---------+-+-+-+-+-+-+-+-+-+-+
         |         | MSB ... LSB       |
@@ -336,7 +336,7 @@ class BinArray:
         |3|j|k|l|
         +-+-+-+-+
 
-        The same repack for from_msb=False is performed as follows:
+        The same repack for msb_first=False is performed as follows:
 
         +---------+-+-+-+-+-+-+-+-+-+-+
         |         | MSB ... LSB       |
@@ -363,8 +363,8 @@ class BinArray:
         +-+-+-+-+
         """
         to_width = operator.index(to_width)
-        if not isinstance(from_msb, bool):
-            raise TypeError('from_msb must be a bool')
+        if not isinstance(msb_first, bool):
+            raise TypeError('msb_first must be a bool')
         available = self.repack_data_available(
                 to_width, start=start, start_bit=start_bit)
         if length is None:
@@ -383,7 +383,7 @@ class BinArray:
             accum = self[pos]
             pos += 1
             rest = accum.width - start_bit
-            if from_msb:
+            if msb_first:
                 accum = accum.extract(0, rest)
             else:
                 accum = accum.extract(start_bit, rest)
@@ -392,12 +392,12 @@ class BinArray:
             while len(accum) < to_width:
                 cur = self[pos]
                 pos += 1
-                if from_msb:
+                if msb_first:
                     accum = BinWord.concat(cur, accum)
                 else:
                     accum = BinWord.concat(accum, cur)
             rest = accum.width - to_width
-            if from_msb:
+            if msb_first:
                 cur = accum.extract(rest, to_width)
                 accum = accum.extract(0, rest)
             else:
@@ -413,7 +413,7 @@ class BinArray:
         either on a concrete BinArray instance (assuming its width as the
         source width), or on the BinArray class (providing the source width
         as an extra first argument).  This function doesn't take ``start``
-        or ``from_msb`` parameters, since they wouldn't affect the computation.
+        or ``msb_first`` parameters, since they wouldn't affect the computation.
         """
         if isinstance(src_width, BinArray):
             src_width = src_width._width

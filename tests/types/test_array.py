@@ -313,40 +313,40 @@ class TestBinArray(unittest.TestCase):
     def test_repack(self):
         a = BinArray(b'\x12\x34\x56\x78')
         b = BinArray([0x12, 0x03, 0x14, 0x05, 0x16], width=5)
-        assert (a.repack(16, from_msb=True) ==
+        assert (a.repack(16, msb_first=True) ==
                 BinArray([0x1234, 0x5678], width=16))
-        assert (a.repack(16, from_msb=False) ==
+        assert (a.repack(16, msb_first=False) ==
                 BinArray([0x3412, 0x7856], width=16))
-        assert (a.repack(10, from_msb=False, start=1, start_bit=2) ==
+        assert (a.repack(10, msb_first=False, start=1, start_bit=2) ==
                 BinArray([0x18d, 0x385], width=10))
-        assert (a.repack(10, from_msb=False, start=1, start_bit=2, length=1) ==
+        assert (a.repack(10, msb_first=False, start=1, start_bit=2, length=1) ==
                 BinArray([0x18d], width=10))
-        assert (a.repack(10, from_msb=True, start=1, start_bit=2) ==
+        assert (a.repack(10, msb_first=True, start=1, start_bit=2) ==
                 BinArray([0x345, 0x19e], width=10))
-        assert (b.repack(9, from_msb=False, start_bit=1) ==
+        assert (b.repack(9, msb_first=False, start_bit=1) ==
                 BinArray([0x039, 0x0b4], width=9))
-        assert (b.repack(9, from_msb=True, start_bit=2) ==
+        assert (b.repack(9, msb_first=True, start_bit=2) ==
                 BinArray([0x087, 0x085], width=9))
-        assert (b.repack(9, from_msb=True, length=0) ==
+        assert (b.repack(9, msb_first=True, length=0) ==
                 BinArray([], width=9))
-        assert (b.repack(9, from_msb=True, start=4) ==
+        assert (b.repack(9, msb_first=True, start=4) ==
                 BinArray([], width=9))
         with pytest.raises(ValueError):
-            a.repack(0, from_msb=True)
+            a.repack(0, msb_first=True)
         with pytest.raises(ValueError):
-            a.repack(-1, from_msb=True)
+            a.repack(-1, msb_first=True)
         with pytest.raises(TypeError):
-            a.repack(2, from_msb='a')
+            a.repack(2, msb_first='a')
         with pytest.raises(ValueError):
-            a.repack(3, from_msb=True, start=-1)
+            a.repack(3, msb_first=True, start=-1)
         with pytest.raises(ValueError):
-            a.repack(3, from_msb=True, length=-1)
+            a.repack(3, msb_first=True, length=-1)
         with pytest.raises(ValueError):
-            a.repack(3, from_msb=True, length=11)
+            a.repack(3, msb_first=True, length=11)
         with pytest.raises(ValueError):
-            a.repack(3, from_msb=True, start=5)
+            a.repack(3, msb_first=True, start=5)
         with pytest.raises(ValueError):
-            a.repack(3, from_msb=True, start=4, start_bit=1)
+            a.repack(3, msb_first=True, start=4, start_bit=1)
 
     def test_repack_source_required(self):
         # As class method.
