@@ -1,9 +1,7 @@
-import unittest
-
 from binflakes.sexpr.location import TextLocationSingle, TextLocationRange
 
 
-class TestLocation(unittest.TestCase):
+class TestLocation:
     def test_single(self):
         a = TextLocationSingle('abc.binflake', 13, 4)
         assert a.filename == 'abc.binflake'

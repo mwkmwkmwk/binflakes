@@ -1,9 +1,7 @@
-import unittest
-
 from binflakes.sexpr.symbol import Symbol
 
 
-class TestSymbol(unittest.TestCase):
+class TestSymbol:
     def test_symbol(self):
         a = Symbol('abc')
         b = Symbol('abc')

@@ -1,4 +1,3 @@
-import unittest
 import pytest
 
 from binflakes.types import BinInt, BinWord, BinArray
@@ -9,7 +8,7 @@ from binflakes.sexpr.nodes import (
 )
 
 
-class TestNodes(unittest.TestCase):
+class TestNodes:
     def test_list(self):
         a = NodeList([NodeNil(), NodeBool(True), NodeList([]),
                       NodeInt(BinInt(123))])
@@ -33,44 +32,45 @@ class TestNodes(unittest.TestCase):
         b = make_node(None)
         assert a == b
 
-    def test_bool(self):
-        a = NodeBool(True)
-        assert str(a) == '@true'
-        b = make_node(True)
-        assert a == b
-        a = NodeBool(False)
-        assert str(a) == '@false'
-        b = make_node(False)
-        assert a == b
-
-    def test_int(self):
-        a = NodeInt(BinInt(123))
-        assert str(a) == '123'
-        b = make_node(123)
-        assert a == b
-        a = NodeInt(BinInt(0x456))
-        assert str(a) == '1110'
-        b = make_node(0x456)
+    @pytest.mark.parametrize(('val', 'res'), [
+        (True, '@true'),
+        (False, '@false'),
+    ])
+    def test_bool(self, val, res):
+        a = NodeBool(val)
+        assert str(a) == res
+        b = make_node(val)
         assert a == b
 
-    def test_word(self):
-        a = NodeWord(BinWord(13, 0x1234))
-        assert str(a) == '13\'0x1234'
-        b = make_node(BinWord(13, 0x1234))
-        assert a == b
-        a = NodeWord(BinWord(0, 0))
-        assert str(a) == '0\'0x0'
-        b = make_node(BinWord(0, 0))
+    @pytest.mark.parametrize(('val', 'res'), [
+        (123, '123'),
+        (0x456, '1110'),
+    ])
+    def test_int(self, val, res):
+        a = NodeInt(BinInt(val))
+        assert str(a) == res
+        b = make_node(val)
         assert a == b
 
-    def test_array(self):
-        a = NodeArray(BinArray([0x1234, 0x567], width=13))
-        assert str(a) == '13\'0x(1234 0567)'
-        a = NodeArray(BinArray([0, 0], width=0))
-        assert str(a) == '0\'0x(0 0)'
-        a = NodeArray(BinArray(width=123))
-        assert str(a) == '123\'0x()'
-        b = make_node(BinArray(width=123))
+    @pytest.mark.parametrize(('val', 'res'), [
+        (BinWord(13, 0x1234), '13\'0x1234'),
+        (BinWord(0, 0), '0\'0x0'),
+    ])
+    def test_word(self, val, res):
+        a = NodeWord(val)
+        assert str(a) == res
+        b = make_node(val)
+        assert a == b
+
+    @pytest.mark.parametrize(('val', 'res'), [
+        (BinArray([0x1234, 0x567], width=13), '13\'0x(1234 0567)'),
+        (BinArray([0, 0], width=0), '0\'0x(0 0)'),
+        (BinArray(width=123), '123\'0x()'),
+    ])
+    def test_array(self, val, res):
+        a = NodeArray(val)
+        assert str(a) == res
+        b = make_node(val)
         assert a == b
 
     def test_string(self):
