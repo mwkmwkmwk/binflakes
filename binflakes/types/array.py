@@ -284,7 +284,8 @@ class BinArray:
 
     __rmul__ = __mul__
 
-    def repack(self, to_width, *, msb_first, start=0, start_bit=0, length=None):
+    def repack(self, to_width, *, msb_first, start=0, start_bit=0,
+               length=None):
         """Extracts a part of a BinArray's data and converts it to a BinArray
         of a different width.
 
@@ -413,7 +414,8 @@ class BinArray:
         either on a concrete BinArray instance (assuming its width as the
         source width), or on the BinArray class (providing the source width
         as an extra first argument).  This function doesn't take ``start``
-        or ``msb_first`` parameters, since they wouldn't affect the computation.
+        or ``msb_first`` parameters, since they wouldn't affect the
+        computation.
         """
         if isinstance(src_width, BinArray):
             src_width = src_width._width

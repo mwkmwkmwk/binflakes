@@ -319,8 +319,8 @@ class TestBinArray(unittest.TestCase):
                 BinArray([0x3412, 0x7856], width=16))
         assert (a.repack(10, msb_first=False, start=1, start_bit=2) ==
                 BinArray([0x18d, 0x385], width=10))
-        assert (a.repack(10, msb_first=False, start=1, start_bit=2, length=1) ==
-                BinArray([0x18d], width=10))
+        assert (a.repack(10, msb_first=False, start=1, start_bit=2,
+                         length=1) == BinArray([0x18d], width=10))
         assert (a.repack(10, msb_first=True, start=1, start_bit=2) ==
                 BinArray([0x345, 0x19e], width=10))
         assert (b.repack(9, msb_first=False, start_bit=1) ==
