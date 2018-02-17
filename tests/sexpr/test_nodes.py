@@ -84,3 +84,5 @@ class TestNodes(unittest.TestCase):
             make_node({})
         with pytest.raises(TypeError):
             make_node(1.5)
+        a = make_node(13)
+        assert make_node(a) == a
