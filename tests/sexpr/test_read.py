@@ -166,12 +166,9 @@ class TestRead:
         'abc',
         '\x0000\x1234\u111234\U0010101010',
         ['a', 'b', ['c', 'd', 'e'], True, 123],
-    ] + [
-        chr(x) for x in range(0x200)
-    ] + [
-        chr(x) for x in range(0, 0x110000, 0x100)
-    ] + [
-        chr(x) for x in range(0xff, 0x110000, 0x100)
+        ''.join(chr(x) for x in range(0x200)),
+        ''.join(chr(x) for x in range(0, 0x110000, 0x100)),
+        ''.join(chr(x) for x in range(0xff, 0x110000, 0x100)),
     ])
     def test_roundtrip(self, t):
         n = make_node(t)
