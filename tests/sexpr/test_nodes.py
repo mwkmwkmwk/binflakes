@@ -4,7 +4,7 @@ from binflakes.types import BinInt, BinWord, BinArray
 from binflakes.sexpr.symbol import Symbol
 from binflakes.sexpr.nodes import (
     NodeList, NodeSymbol, NodeNil, NodeBool, NodeInt, NodeWord, NodeArray,
-    NodeString, make_node
+    NodeString, make_node,
 )
 
 
