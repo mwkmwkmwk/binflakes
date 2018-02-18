@@ -2,7 +2,6 @@ from attr import attrs, attrib
 from attr.validators import optional, instance_of
 
 from binflakes.types import BinInt, BinWord, BinArray
-
 from .location import TextLocationRange
 from .string import escape_string
 from .symbol import Symbol

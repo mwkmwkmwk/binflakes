@@ -1,15 +1,15 @@
-from attr import attrs, attrib
-from attr.validators import instance_of
+import re
 from enum import Enum
 from io import StringIO
-import re
 
+from attr import attrs, attrib
+from attr.validators import instance_of
+
+from binflakes.types import BinWord, BinArray
 from .string import ESCAPE_TO_CHAR
 from .symbol import Symbol
 from .location import TextLocationSingle, TextLocationRange
 from .nodes import make_node
-
-from binflakes.types import BinWord, BinArray
 
 
 class ReadError(Exception):

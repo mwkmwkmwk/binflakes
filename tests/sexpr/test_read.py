@@ -1,4 +1,5 @@
 import textwrap
+
 import pytest
 
 from binflakes.types import BinInt, BinWord, BinArray
