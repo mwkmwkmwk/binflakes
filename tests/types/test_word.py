@@ -1,63 +1,45 @@
+import operator
+
 import pytest
 
 from binflakes.types import BinWord, BinInt
 
 
 class TestBinWord:
-    def test_construct(self):
-        a = BinWord(0, 0)
-        assert a.width == 0
-        assert a.to_uint() == 0
-        assert a.to_sint() == 0
-        assert a.mask == 0
-        assert int(a) == 0
-        a = BinWord(12, 0)
-        assert a.width == 12
-        assert a.to_uint() == 0
-        assert a.to_sint() == 0
-        assert a.mask == 0xfff
-        assert int(a) == 0
-        a = BinWord(12, 0x123)
-        assert a.width == 12
-        assert a.to_uint() == 0x123
-        assert a.to_sint() == 0x123
-        assert a.mask == 0xfff
-        assert int(a) == 0x123
-        a = BinWord(12, 0xfff)
-        assert a.width == 12
-        assert a.to_uint() == 0xfff
-        assert a.to_sint() == -1
-        assert a.mask == 0xfff
-        assert int(a) == 0xfff
-        a = BinWord(12, 0x1234, trunc=True)
-        assert a.width == 12
-        assert a.to_uint() == 0x234
-        assert a.to_sint() == 0x234
-        assert a.mask == 0xfff
-        assert int(a) == 0x234
-        a = BinWord(12, -1, trunc=True)
-        assert a.width == 12
-        assert a.to_uint() == 0xfff
-        assert a.to_sint() == -1
-        assert a.mask == 0xfff
-        assert int(a) == 0xfff
+    @pytest.mark.parametrize((
+        'width', 'val', 'trunc', 'uval', 'sval', 'mask',
+    ), [
+        (0, 0, False, 0, 0, 0),
+        (12, 0, False, 0, 0, 0xfff),
+        (12, 0x123, False, 0x123, 0x123, 0xfff),
+        (12, 0xfff, False, 0xfff, -1, 0xfff),
+        (12, 0x1234, True, 0x234, 0x234, 0xfff),
+        (12, 0xabcd, True, 0xbcd, -0x433, 0xfff),
+        (12, -1, True, 0xfff, -1, 0xfff),
+    ])
+    def test_construct(self, width, val, trunc, uval, sval, mask):
+        a = BinWord(width, val, trunc=trunc)
+        assert a.width == width
+        assert a.to_uint() == uval
+        assert a.to_sint() == sval
+        assert a.mask == mask
+        assert int(a) == uval
         assert isinstance(a.to_uint(), BinInt)
         assert isinstance(a.to_sint(), BinInt)
         assert isinstance(a.mask, BinInt)
-        with pytest.raises(ValueError):
-            BinWord(12, 0x1000)
-        with pytest.raises(ValueError):
-            BinWord(12, 0x1234)
-        with pytest.raises(ValueError):
-            BinWord(12, -1)
-        with pytest.raises(ValueError):
-            BinWord(-1, 0)
-        with pytest.raises(TypeError):
-            BinWord(12.0, 0)
-        with pytest.raises(TypeError):
-            BinWord(object(), 0)
-        with pytest.raises(TypeError):
-            BinWord(12, object())
+
+    @pytest.mark.parametrize(('width', 'val', 'e'), [
+        (12, 0x1000, ValueError),
+        (12, 0x1234, ValueError),
+        (12, -1, ValueError),
+        (-1, 0, ValueError),
+        (12.0, 0, TypeError),
+        (object(), 0, TypeError),
+        (12, 1.0, TypeError),
+    ])
+    def test_construct_fail(self, width, val, e):
+        with pytest.raises(e):
+            BinWord(width, val)
 
     def test_display(self):
         a = BinWord(0, 0)
@@ -147,6 +129,9 @@ class TestBinWord:
         assert a[1:4:-1] == BinWord(0, 0)
         assert a[4:0:-1] == BinWord(4, 0x8)
         assert a[4::-1] == BinWord(5, 0x18)
+
+    def test_extract(self):
+        a = BinWord(12, 0x123)
         assert a.extract(0, 4) == BinWord(4, 0x3)
         assert a.extract(4, 4) == BinWord(4, 0x2)
         assert a.extract(8, 4) == BinWord(4, 0x1)
@@ -163,178 +148,110 @@ class TestBinWord:
         with pytest.raises(TypeError):
             a.extract(0, object())
 
-    def test_bool(self):
-        a = BinWord(0, 0)
-        assert not a
-        a = BinWord(1, 0)
-        assert not a
-        a = BinWord(1, 1)
-        assert a
-        a = BinWord(12, 0)
-        assert not a
-        a = BinWord(12, 1)
-        assert a
-        a = BinWord(12, 2)
-        assert a
-        a = BinWord(12, -1, trunc=True)
-        assert a
-        a = BinWord(12, 0x800)
-        assert a
+    @pytest.mark.parametrize(('v', 'b'), [
+        (BinWord(0, 0), False),
+        (BinWord(1, 0), False),
+        (BinWord(1, 1), True),
+        (BinWord(123, 0), False),
+        (BinWord(123, 1), True),
+        (BinWord(123, 2), True),
+        (BinWord(123, -1, trunc=True), True),
+        (BinWord(123, 1 << 122), True),
+    ])
+    def test_bool(self, v, b):
+        assert bool(v) == b
 
-    def test_arith(self):
-        a = BinWord(12, 0x123)
-        b = BinWord(12, 0x456)
-        c = BinWord(12, 0xabc)
-        d = BinWord(12, 0xdef)
-        e = BinWord(11, 0x123)
-        assert a + b == BinWord(12, 0x579)
-        assert a + c == BinWord(12, 0xbdf)
-        assert b + d == BinWord(12, 0x245)
-        with pytest.raises(ValueError):
-            a + e
-        with pytest.raises(TypeError):
-            a + 0x123
-        with pytest.raises(TypeError):
-            0x123 + a
-        with pytest.raises(TypeError):
-            a + object()
-        with pytest.raises(TypeError):
-            object() + a
-        assert a - b == BinWord(12, 0xccd)
-        assert b - a == BinWord(12, 0x333)
-        assert a - c == BinWord(12, 0x667)
-        assert b - d == BinWord(12, 0x667)
-        with pytest.raises(ValueError):
-            a - e
-        with pytest.raises(TypeError):
-            a - 0x123
-        with pytest.raises(TypeError):
-            0x123 - a
-        with pytest.raises(TypeError):
-            a - object()
-        with pytest.raises(TypeError):
-            object() - a
-        assert a * b == BinWord(12, 0xdc2)
-        assert a * c == BinWord(12, 0x3b4)
-        assert b * d == BinWord(12, 0xa4a)
-        with pytest.raises(ValueError):
-            a * e
-        with pytest.raises(TypeError):
-            a * 0x123
-        with pytest.raises(TypeError):
-            0x123 * a
-        with pytest.raises(TypeError):
-            a * object()
-        with pytest.raises(TypeError):
-            object() * a
-        assert -a == BinWord(12, 0xedd)
-        assert -b == BinWord(12, 0xbaa)
-        assert -c == BinWord(12, 0x544)
-        assert -d == BinWord(12, 0x211)
-        assert -e == BinWord(11, 0x6dd)
+    @pytest.mark.parametrize(('w', 'v', 'ri', 'rn'), [
+        (12, 0x123, 0xedc, 0xedd),
+        (12, 0x456, 0xba9, 0xbaa),
+        (12, 0xabc, 0x543, 0x544),
+        (12, 0xdef, 0x210, 0x211),
+        (11, 0x123, 0x6dc, 0x6dd),
+        (11, 0x7ff, 0x000, 0x001),
+        (11, 0x000, 0x7ff, 0x000),
+        (11, 0x001, 0x7fe, 0x7ff),
+    ])
+    def test_unary(self, w, v, ri, rn):
+        v = BinWord(w, v)
+        ri = BinWord(w, ri)
+        rn = BinWord(w, rn)
+        assert ~v == ri
+        assert -v == rn
 
-    def test_bitop(self):
-        a = BinWord(12, 0x123)
-        b = BinWord(12, 0x456)
-        c = BinWord(12, 0xabc)
-        d = BinWord(12, 0xdef)
-        e = BinWord(11, 0x123)
-        assert a & b == BinWord(12, 0x002)
-        assert a & c == BinWord(12, 0x020)
-        assert b & d == BinWord(12, 0x446)
-        with pytest.raises(ValueError):
-            a & e
-        with pytest.raises(TypeError):
-            a & 0x123
-        with pytest.raises(TypeError):
-            0x123 & a
-        with pytest.raises(TypeError):
-            a & object()
-        with pytest.raises(TypeError):
-            object() & a
-        assert a | b == BinWord(12, 0x577)
-        assert a | c == BinWord(12, 0xbbf)
-        assert b | d == BinWord(12, 0xdff)
-        with pytest.raises(ValueError):
-            a | e
-        with pytest.raises(TypeError):
-            a | 0x123
-        with pytest.raises(TypeError):
-            0x123 | a
-        with pytest.raises(TypeError):
-            a | object()
-        with pytest.raises(TypeError):
-            object() | a
-        assert a ^ b == BinWord(12, 0x575)
-        assert a ^ c == BinWord(12, 0xb9f)
-        assert b ^ d == BinWord(12, 0x9b9)
-        with pytest.raises(ValueError):
-            a ^ e
-        with pytest.raises(TypeError):
-            a ^ 0x123
-        with pytest.raises(TypeError):
-            0x123 ^ a
-        with pytest.raises(TypeError):
-            a ^ object()
-        with pytest.raises(TypeError):
-            object() ^ a
-        assert ~a == BinWord(12, 0xedc)
-        assert ~b == BinWord(12, 0xba9)
-        assert ~c == BinWord(12, 0x543)
-        assert ~d == BinWord(12, 0x210)
-        assert ~e == BinWord(11, 0x6dc)
+    @pytest.mark.parametrize((
+        'w', 'a',  'b',   'rp',  'rm',  'rrm',  'rt',  'ra',  'ro',  'rx',
+    ), [
+        #                  a + b  a - b  b - a  a * b  a & b  a | b  a ^ b
+        (12, 0x123, 0x456, 0x579, 0xccd, 0x333, 0xdc2, 0x002, 0x577, 0x575),
+        (12, 0x123, 0xabc, 0xbdf, 0x667, 0x999, 0x3b4, 0x020, 0xbbf, 0xb9f),
+        (12, 0x456, 0xdef, 0x245, 0x667, 0x999, 0xa4a, 0x446, 0xdff, 0x9b9),
+    ])
+    def test_binary(self, w, a, b, rp, rm, rrm, rt, ra, ro, rx):
+        a = BinWord(w, a)
+        b = BinWord(w, b)
+        assert a + b == BinWord(w, rp)
+        assert a - b == BinWord(w, rm)
+        assert b - a == BinWord(w, rrm)
+        assert a * b == BinWord(w, rt)
+        assert a & b == BinWord(w, ra)
+        assert a | b == BinWord(w, ro)
+        assert a ^ b == BinWord(w, rx)
 
-    def test_shift(self):
+    @pytest.mark.parametrize('op', [
+        operator.add,
+        operator.sub,
+        operator.mul,
+        operator.and_,
+        operator.or_,
+        operator.xor,
+    ])
+    @pytest.mark.parametrize(('a', 'b', 'e'), [
+        (BinWord(12, 0x123), BinWord(11, 0x123), ValueError),
+        (BinWord(12, 0x123), 0x123, TypeError),
+        (0x123, BinWord(12, 0x123), TypeError),
+        (BinWord(12, 0x123), object(), TypeError),
+        (object(), BinWord(12, 0x123), TypeError),
+    ])
+    def test_binary_fail(self, op, a, b, e):
+        with pytest.raises(e):
+            op(a, b)
+
+    @pytest.mark.parametrize((
+        'w', 'a', 's', 'rl', 'rr', 'ra',
+    ), [
+        #              <<     >>     sar
+        (12, 0x123, 0, 0x123, 0x123, 0x123),
+        (12, 0xabc, 0, 0xabc, 0xabc, 0xabc),
+        (12, 0x123, 1, 0x246, 0x091, 0x091),
+        (12, 0xabc, 1, 0x578, 0x55e, 0xd5e),
+        (12, 0x123, 4, 0x230, 0x012, 0x012),
+        (12, 0xabc, 4, 0xbc0, 0x0ab, 0xfab),
+        (12, 0x123, 2**128, 0, 0, 0),
+        (12, 0xabc, 2**128, 0, 0, 0xfff),
+        (12, 0x123, BinWord(10, 2), 0x48c, 0x048, 0x048),
+        (12, 0xabc, BinWord(10, 2), 0xaf0, 0x2af, 0xeaf),
+        (12, 0x123, BinWord(128, 2**127), 0, 0, 0),
+        (12, 0xabc, BinWord(128, 2**127), 0, 0, 0xfff),
+    ])
+    def test_shift(self, w, a, s, rl, rr, ra):
+        a = BinWord(w, a)
+        assert a << s == BinWord(w, rl)
+        assert a >> s == BinWord(w, rr)
+        assert a.sar(s) == BinWord(w, ra)
+
+    @pytest.mark.parametrize('op', [
+        operator.lshift,
+        operator.rshift,
+        BinWord.sar,
+    ])
+    @pytest.mark.parametrize(('shift', 'e'), [
+        (1.0, TypeError),
+        (-1, ValueError),
+    ])
+    def test_shift_fail(self, op, shift, e):
         a = BinWord(12, 0x123)
-        b = BinWord(12, 0xabc)
-        assert a << 0 == a
-        assert b << 0 == b
-        assert a << 1 == BinWord(12, 0x246)
-        assert b << 1 == BinWord(12, 0x578)
-        assert a << 4 == BinWord(12, 0x230)
-        assert b << 4 == BinWord(12, 0xbc0)
-        assert a << 2**128 == BinWord(12, 0x000)
-        assert b << 2**128 == BinWord(12, 0x000)
-        assert a << BinWord(10, 2) == BinWord(12, 0x48c)
-        assert b << BinWord(10, 2) == BinWord(12, 0xaf0)
-        assert a << BinWord(128, 2**127) == BinWord(12, 0x000)
-        assert b << BinWord(128, 2**127) == BinWord(12, 0x000)
-        with pytest.raises(TypeError):
-            a << object()
-        with pytest.raises(ValueError):
-            a << -1
-        assert a >> 0 == a
-        assert b >> 0 == b
-        assert a >> 1 == BinWord(12, 0x091)
-        assert b >> 1 == BinWord(12, 0x55e)
-        assert a >> 4 == BinWord(12, 0x012)
-        assert b >> 4 == BinWord(12, 0x0ab)
-        assert a >> 2**128 == BinWord(12, 0x000)
-        assert b >> 2**128 == BinWord(12, 0x000)
-        assert a >> BinWord(10, 2) == BinWord(12, 0x048)
-        assert b >> BinWord(10, 2) == BinWord(12, 0x2af)
-        assert a >> BinWord(128, 2**127) == BinWord(12, 0x000)
-        assert b >> BinWord(128, 2**127) == BinWord(12, 0x000)
-        with pytest.raises(TypeError):
-            a >> object()
-        with pytest.raises(ValueError):
-            a >> -1
-        assert a.sar(0) == a
-        assert b.sar(0) == b
-        assert a.sar(1) == BinWord(12, 0x091)
-        assert b.sar(1) == BinWord(12, 0xd5e)
-        assert a.sar(4) == BinWord(12, 0x012)
-        assert b.sar(4) == BinWord(12, 0xfab)
-        assert a.sar(2**128) == BinWord(12, 0x000)
-        assert b.sar(2**128) == BinWord(12, 0xfff)
-        assert a.sar(BinWord(10, 2)) == BinWord(12, 0x048)
-        assert b.sar(BinWord(10, 2)) == BinWord(12, 0xeaf)
-        assert a.sar(BinWord(128, 2**127)) == BinWord(12, 0x000)
-        assert b.sar(BinWord(128, 2**127)) == BinWord(12, 0xfff)
-        with pytest.raises(TypeError):
-            a.sar(object())
-        with pytest.raises(ValueError):
-            a.sar(-1)
+        with pytest.raises(e):
+            op(a, shift)
 
     def test_cmp(self):
         a = BinWord(12, 0x123)

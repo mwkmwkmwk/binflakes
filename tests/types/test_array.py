@@ -128,48 +128,48 @@ class TestBinArray:
                     assert x != y
                     assert not x == y
 
-    def test_getitem(self):
-        for width in range(1, 80):
-            tries = 10 if width < 10 else 2
-            for _ in range(tries):
-                num = random.randrange(100, 128)
-                data = [random.getrandbits(width) for _ in range(num)]
-                a = BinArray(data, width=width)
-                assert len(a) == len(data)
-                for i in range(-len(a), len(a)):
-                    assert a[i] == BinWord(width, data[i])
-                for x, y in zip(a, data):
-                    assert x == BinWord(width, y)
-                with pytest.raises(IndexError):
-                    a[-len(a)-1]
-                with pytest.raises(IndexError):
-                    a[len(a)]
-
-    def test_setitem(self):
-        for width in range(1, 80):
+    @pytest.mark.parametrize('width', range(1, 80))
+    def test_getitem(self, width):
+        tries = 10 if width < 10 else 2
+        for _ in range(tries):
             num = random.randrange(100, 128)
             data = [random.getrandbits(width) for _ in range(num)]
             a = BinArray(data, width=width)
-            for _ in range(10):
-                idx = random.randrange(len(a))
-                nval = random.getrandbits(width)
-                data[idx] = nval
-                if random.getrandbits(1):
-                    nval = BinWord(width, nval)
-                a[idx] = nval
-                assert len(a) == len(data)
-                for x, y in zip(a, data):
-                    assert x == BinWord(width, y)
-            with pytest.raises(ValueError):
-                a[0] = BinWord(width+1, 0)
-            with pytest.raises(TypeError):
-                a[0] = object()
+            assert len(a) == len(data)
+            for i in range(-len(a), len(a)):
+                assert a[i] == BinWord(width, data[i])
+            for x, y in zip(a, data):
+                assert x == BinWord(width, y)
             with pytest.raises(IndexError):
-                a[-len(a)-1] = 0
+                a[-len(a)-1]
             with pytest.raises(IndexError):
-                a[len(a)] = 0
-            with pytest.raises(ValueError):
-                a[0] = 1 << 100
+                a[len(a)]
+
+    @pytest.mark.parametrize('width', range(1, 80))
+    def test_setitem(self, width):
+        num = random.randrange(100, 128)
+        data = [random.getrandbits(width) for _ in range(num)]
+        a = BinArray(data, width=width)
+        for _ in range(10):
+            idx = random.randrange(len(a))
+            nval = random.getrandbits(width)
+            data[idx] = nval
+            if random.getrandbits(1):
+                nval = BinWord(width, nval)
+            a[idx] = nval
+            assert len(a) == len(data)
+            for x, y in zip(a, data):
+                assert x == BinWord(width, y)
+        with pytest.raises(ValueError):
+            a[0] = BinWord(width+1, 0)
+        with pytest.raises(TypeError):
+            a[0] = object()
+        with pytest.raises(IndexError):
+            a[-len(a)-1] = 0
+        with pytest.raises(IndexError):
+            a[len(a)] = 0
+        with pytest.raises(ValueError):
+            a[0] = 1 << 100
 
     def test_getslice(self):
         a = BinArray([0x123, 0x456, 0x789, 0xabc, 0xdef], width=13)

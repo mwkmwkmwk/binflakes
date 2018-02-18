@@ -1,180 +1,229 @@
+import operator
+
 import pytest
 
 from binflakes.types import BinWord, BinInt
 
 
+class _MakeSlice:
+    """Dummy class to easily make slice objects"""
+
+    def __getitem__(self, idx):
+        return idx
+
+
+_ = _MakeSlice()
+
+
 class TestBinInt:
-    def test_construct(self):
-        a = BinInt(12)
-        assert a == 12
-        a = BinInt(BinWord(12, 0x123))
-        assert a == 0x123
-        a = BinInt(a)
-        assert a == 0x123
+    @pytest.mark.parametrize(('a', 'b'), [
+        (12, 12),
+        (BinWord(12, 0x123), 0x123),
+        (BinInt(0x123), 0x123),
+    ])
+    def test_construct(self, a, b):
+        v = BinInt(a)
+        assert v == b
 
-    def test_display(self):
-        a = BinInt(12)
-        assert repr(a) == 'BinInt(12)'
-        assert str(a) == '12'
-        a = BinInt(-12)
-        assert repr(a) == 'BinInt(-12)'
-        assert str(a) == '-12'
+    @pytest.mark.parametrize(('v', 'r', 's'), [
+        (12, 'BinInt(12)', '12'),
+        (-12, 'BinInt(-12)', '-12'),
+    ])
+    def test_display(self, v, r, s):
+        a = BinInt(v)
+        assert repr(a) == r
+        assert str(a) == s
 
-    def test_mask(self):
-        a = BinInt.mask(12)
-        assert isinstance(a, BinInt)
-        assert a == 0xfff
-        a = BinInt.mask(0)
-        assert isinstance(a, BinInt)
-        assert a == 0
+    @pytest.mark.parametrize(('a', 'r'), [
+        (12, 0xfff),
+        (2, 3),
+        (1, 1),
+        (0, 0),
+    ])
+    def test_mask(self, a, r):
+        v = BinInt.mask(a)
+        assert isinstance(v, BinInt)
+        assert v == r
+
+    def test_mask_negative(self):
         with pytest.raises(ValueError):
-            a = BinInt.mask(-1)
+            BinInt.mask(-1)
 
-    def test_index(self):
+    @pytest.mark.parametrize(('a', 'i', 'e'), [
+        (0x123, 0, 1),
+        (0x123, 1, 1),
+        (0x123, 2, 0),
+        (0x123, 3, 0),
+        (0x123, 1337, 0),
+        (-0x123, 0, 1),
+        (-0x123, 1, 0),
+        (-0x123, 2, 1),
+        (-0x123, 3, 1),
+        (-0x123, 1337, 1),
+    ])
+    def test_index(self, a, i, e):
+        a = BinInt(a)
+        assert a[i] == BinWord(1, e)
+
+    def test_index_fail(self):
         a = BinInt(0x123)
-        b = BinInt(-0x123)
-        assert a[0] == BinWord(1, 1)
-        assert a[1] == BinWord(1, 1)
-        assert a[2] == BinWord(1, 0)
-        assert a[3] == BinWord(1, 0)
-        assert b[0] == BinWord(1, 1)
-        assert b[1] == BinWord(1, 0)
-        assert b[2] == BinWord(1, 1)
-        assert b[3] == BinWord(1, 1)
-        assert a[1337] == BinWord(1, 0)
-        assert b[1337] == BinWord(1, 1)
         with pytest.raises(TypeError):
             a[object()]
         with pytest.raises(ValueError):
             a[-1]
 
-    def test_slice(self):
-        a = BinInt(0x123)
-        b = BinInt(-0x123)
-        assert a[:8] == BinWord(8, 0x23)
-        assert b[:8] == BinWord(8, 0xdd)
-        assert a[4:8] == BinWord(4, 2)
-        assert b[4:8] == BinWord(4, 0xd)
-        assert a[4:] == BinInt(0x12)
-        assert b[4:] == BinInt(-0x13)
-        assert a[:] == a
-        assert b[:] == b
-        assert b[4:4] == BinWord(0, 0)
-        assert b[8:4] == BinWord(0, 0)
-        assert isinstance(a[4:], BinInt)
-        assert isinstance(a[:], BinInt)
-        with pytest.raises(ValueError):
-            a[-2:]
-        with pytest.raises(ValueError):
-            a[:-2]
-        with pytest.raises(TypeError):
-            a[object():]
-        with pytest.raises(TypeError):
-            a[:object()]
-        assert a[:16:2] == BinWord(8, 0x11)
-        assert b[:16:2] == BinWord(8, 0xef)
-        assert a[1:16:2] == BinWord(8, 0x05)
-        assert b[1:16:2] == BinWord(8, 0xfa)
-        assert a[::2] == 0x11
-        assert b[::2] == -0x11
-        assert a[1::2] == 0x5
-        assert b[1::2] == -0x6
-        assert isinstance(a[::2], BinInt)
-        assert b[16:1:2] == BinWord(0, 0)
-        with pytest.raises(ValueError):
-            a[::0]
-        with pytest.raises(ValueError):
-            a[1:2:0]
-        with pytest.raises(ValueError):
-            a[::-1]
-        with pytest.raises(ValueError):
-            a[:7:-1]
-        assert a[7:0:-1] == BinWord(7, 0x44)
-        assert b[7:0:-1] == BinWord(7, 0x3b)
-        assert a[7::-1] == BinWord(8, 0xc4)
-        assert b[7::-1] == BinWord(8, 0xbb)
-        with pytest.raises(ValueError):
-            a[::-2]
-        with pytest.raises(ValueError):
-            a[:7:-2]
-        assert a[7:0:-2] == BinWord(4, 0xa)
-        assert b[7:0:-2] == BinWord(4, 0x5)
-        assert a[7::-2] == BinWord(4, 0xa)
-        assert b[7::-2] == BinWord(4, 0x5)
+    @pytest.mark.parametrize(('v', 'i', 'e'), [
+        (0x123, _[4:], 0x12),
+        (-0x123, _[4:], -0x13),
+        (0x123, _[:], 0x123),
+        (-0x123, _[:], -0x123),
+        (0x123, _[::2], 0x11),
+        (-0x123, _[::2], -0x11),
+        (0x123, _[1::2], 0x5),
+        (-0x123, _[1::2], -0x6),
+    ])
+    def test_slice_int(self, v, i, e):
+        a = BinInt(v)
+        r = a[i]
+        assert r == e
+        assert isinstance(r, BinInt)
 
-    def test_extract(self):
-        a = BinInt(0x123)
-        b = BinInt(-0x123)
-        assert a.extract(0, 4) == BinWord(4, 3)
-        assert b.extract(0, 4) == BinWord(4, 0xd)
-        assert a.extract(4, 4) == BinWord(4, 2)
-        assert b.extract(4, 4) == BinWord(4, 0xd)
-        assert a.extract(0, 0) == BinWord(0, 0)
-        with pytest.raises(ValueError):
-            a.extract(0, -1)
-        with pytest.raises(ValueError):
-            a.extract(-1, 4)
-        with pytest.raises(TypeError):
-            a.extract(object(), 4)
-        with pytest.raises(TypeError):
-            a.extract(0, object())
+    @pytest.mark.parametrize(('v', 'i', 'e'), [
+        (0x123, _[:8], BinWord(8, 0x23)),
+        (-0x123, _[:8], BinWord(8, 0xdd)),
+        (0x123, _[4:8], BinWord(4, 2)),
+        (-0x123, _[4:8], BinWord(4, 0xd)),
+        (-0x123, _[4:4], BinWord(0, 0)),
+        (-0x123, _[8:4], BinWord(0, 0)),
+        (0x123, _[:16:2], BinWord(8, 0x11)),
+        (-0x123, _[:16:2], BinWord(8, 0xef)),
+        (0x123, _[1:16:2], BinWord(8, 0x05)),
+        (-0x123, _[1:16:2], BinWord(8, 0xfa)),
+        (-0x123, _[16:1:2], BinWord(0, 0)),
+        (0x123, _[7:0:-1], BinWord(7, 0x44)),
+        (-0x123, _[7:0:-1], BinWord(7, 0x3b)),
+        (0x123, _[7::-1], BinWord(8, 0xc4)),
+        (-0x123, _[7::-1], BinWord(8, 0xbb)),
+        (0x123, _[7:0:-2], BinWord(4, 0xa)),
+        (-0x123, _[7:0:-2], BinWord(4, 0x5)),
+        (0x123, _[7::-2], BinWord(4, 0xa)),
+        (-0x123, _[7::-2], BinWord(4, 0x5)),
+    ])
+    def test_slice_word(self, v, i, e):
+        a = BinInt(v)
+        r = a[i]
+        assert r == e
 
-    def test_type(self):
+    @pytest.mark.parametrize(('s', 'e'), [
+        (_[-2:], ValueError),
+        (_[:-2], ValueError),
+        (_[:object()], TypeError),
+        (_[object():], TypeError),
+        (_[::0], ValueError),
+        (_[1:2:0], ValueError),
+        (_[::-1], ValueError),
+        (_[:7:-1], ValueError),
+        (_[::-2], ValueError),
+        (_[:7:-2], ValueError),
+    ])
+    def test_slice_fail(self, s, e):
+        a = BinInt(0x123)
+        with pytest.raises(e):
+            a[s]
+
+    @pytest.mark.parametrize(('val', 'pos', 'width', 'res'), [
+        (0x123, 0, 4, BinWord(4, 3)),
+        (-0x123, 0, 4, BinWord(4, 0xd)),
+        (0x123, 4, 4, BinWord(4, 2)),
+        (-0x123, 4, 4, BinWord(4, 0xd)),
+        (0x123, 0, 0, BinWord(0, 0)),
+    ])
+    def test_extract(self, val, pos, width, res):
+        a = BinInt(val)
+        assert a.extract(pos, width) == res
+
+    @pytest.mark.parametrize(('pos', 'width', 'e'), [
+        (0, -1, ValueError),
+        (-1, 4, ValueError),
+        (object(), 4, TypeError),
+        (0, object(), TypeError),
+    ])
+    def test_extract_fail(self, pos, width, e):
+        a = BinInt(0x123)
+        with pytest.raises(e):
+            a.extract(pos, width)
+
+    @pytest.mark.parametrize('op', [
+        operator.add,
+        operator.sub,
+        operator.mul,
+        operator.floordiv,
+        operator.mod,
+        operator.and_,
+        operator.or_,
+        operator.xor,
+    ])
+    def test_type_binary(self, op):
         a = BinInt(1)
-        assert isinstance(a + a, BinInt)
-        assert isinstance(a + 1, BinInt)
-        assert isinstance(1 + a, BinInt)
-        assert isinstance(a - a, BinInt)
-        assert isinstance(a - 1, BinInt)
-        assert isinstance(1 - a, BinInt)
-        assert isinstance(a // a, BinInt)
-        assert isinstance(a // 1, BinInt)
-        assert isinstance(1 // a, BinInt)
-        assert isinstance(a % a, BinInt)
-        assert isinstance(a % 1, BinInt)
-        assert isinstance(1 % a, BinInt)
-        assert isinstance(a * a, BinInt)
-        assert isinstance(a * 1, BinInt)
-        assert isinstance(1 * a, BinInt)
-        assert isinstance(a & a, BinInt)
-        assert isinstance(a & 1, BinInt)
-        assert isinstance(1 & a, BinInt)
-        assert isinstance(a | a, BinInt)
-        assert isinstance(a | 1, BinInt)
-        assert isinstance(1 | a, BinInt)
-        assert isinstance(a ^ a, BinInt)
-        assert isinstance(a ^ 1, BinInt)
-        assert isinstance(1 ^ a, BinInt)
-        assert isinstance(-a, BinInt)
-        assert isinstance(~a, BinInt)
-        assert isinstance(+a, BinInt)
-        assert isinstance(abs(a), BinInt)
-        assert isinstance(a << a, BinInt)
-        assert isinstance(a << 1, BinInt)
-        assert isinstance(a >> a, BinInt)
-        assert isinstance(a >> 1, BinInt)
+        assert isinstance(op(a, a), BinInt)
+        assert isinstance(op(a, 1), BinInt)
+        assert isinstance(op(1, a), BinInt)
+
+    @pytest.mark.parametrize('op', [
+        operator.neg,
+        operator.pos,
+        operator.invert,
+        operator.abs,
+    ])
+    def test_type_unary(self, op):
+        a = BinInt(1)
+        assert isinstance(op(a), BinInt)
+
+    @pytest.mark.parametrize('op', [
+        operator.lshift,
+        operator.rshift,
+    ])
+    def test_type_shift(self, op):
+        a = BinInt(1)
+        assert isinstance(op(a, a), BinInt)
+        assert isinstance(op(a, 1), BinInt)
+
+    def test_type_misc(self):
+        a = BinInt(1)
         with pytest.raises(TypeError):
             len(a)
         assert isinstance(BinInt.from_bytes(b'a', 'little'), BinInt)
 
-    def test_ceildiv(self):
-        assert BinInt(15).ceildiv(BinInt(8)) == 2
-        assert BinInt(16).ceildiv(BinInt(8)) == 2
-        assert BinInt(17).ceildiv(BinInt(8)) == 3
-        assert BinInt(-15).ceildiv(BinInt(8)) == -1
-        assert BinInt(-16).ceildiv(BinInt(8)) == -2
-        assert BinInt(-17).ceildiv(BinInt(8)) == -2
-        assert BinInt(15).ceildiv(BinInt(-8)) == -1
-        assert BinInt(16).ceildiv(BinInt(-8)) == -2
-        assert BinInt(17).ceildiv(BinInt(-8)) == -2
-        assert BinInt(-15).ceildiv(BinInt(-8)) == 2
-        assert BinInt(-16).ceildiv(BinInt(-8)) == 2
-        assert BinInt(-17).ceildiv(BinInt(-8)) == 3
+    @pytest.mark.parametrize(('a', 'b', 'r'), [
+        (15, 8, 2),
+        (16, 8, 2),
+        (17, 8, 3),
+        (-15, 8, -1),
+        (-16, 8, -2),
+        (-17, 8, -2),
+        (15, -8, -1),
+        (16, -8, -2),
+        (17, -8, -2),
+        (-15, -8, 2),
+        (-16, -8, 2),
+        (-17, -8, 3),
+    ])
+    def test_ceildiv(self, a, b, r):
+        assert BinInt(a).ceildiv(BinInt(b)) == r
 
-    def test_deposit(self):
-        assert BinInt(0x123).deposit(0, BinWord(4, 0x5)) == 0x125
-        assert BinInt(0x123).deposit(4, BinWord(4, 0x5)) == 0x153
-        with pytest.raises(TypeError):
-            BinInt(0x123).deposit(0, 5)
-        with pytest.raises(ValueError):
-            BinInt(0x123).deposit(-1, BinWord(4, 0x5))
+    @pytest.mark.parametrize(('val', 'pos', 'word', 'res'), [
+        (0x123, 0, BinWord(4, 0x5), 0x125),
+        (0x123, 4, BinWord(4, 0x5), 0x153),
+    ])
+    def test_deposit(self, val, pos, word, res):
+        assert BinInt(val).deposit(pos, word) == res
+
+    @pytest.mark.parametrize(('pos', 'word', 'e'), [
+        (0, 5, TypeError),
+        (-1, BinWord(4, 0x5), ValueError),
+        (1.5, BinWord(4, 0x5), TypeError),
+    ])
+    def test_deposit_fail(self, pos, word, e):
+        a = BinInt(0x123)
+        with pytest.raises(e):
+            a.deposit(pos, word)
