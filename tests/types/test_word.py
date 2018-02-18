@@ -1,10 +1,9 @@
-import unittest
 import pytest
 
 from binflakes.types import BinWord, BinInt
 
 
-class TestBinWord(unittest.TestCase):
+class TestBinWord:
     def test_construct(self):
         a = BinWord(0, 0)
         assert a.width == 0

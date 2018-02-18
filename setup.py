@@ -1,7 +1,9 @@
 # coding: utf-8
-from setuptools import setup, find_packages
+
 from codecs import open
 from os import path
+
+from setuptools import find_packages, setup
 
 here = path.abspath(path.dirname(__file__))
 
@@ -46,6 +48,8 @@ setup(
         'flake8-comprehensions',
         # Detects leftover debugger breakpoints.
         'flake8-debugger',
+        # Validates import ordering.
+        'flake8-import-order',
         # Detects invalid escape sequences (eg. "\c").
         'flake8-invalid-escape-sequences',
         # Detects leftover print calls.

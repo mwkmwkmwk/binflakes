@@ -1,11 +1,11 @@
-import unittest
-import pytest
 import random
+
+import pytest
 
 from binflakes.types import BinArray, BinWord
 
 
-class TestBinArray(unittest.TestCase):
+class TestBinArray:
     def test_construct(self):
         a = BinArray(width=12)
         assert len(a) == 0
