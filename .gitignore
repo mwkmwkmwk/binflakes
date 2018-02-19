@@ -4,4 +4,5 @@
 /.cache/
 /.pytest_cache/
 /.coverage
+/.eggs/
 __pycache__/

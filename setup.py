@@ -1,7 +1,9 @@
 # coding: utf-8
-from setuptools import setup, find_packages
+
 from codecs import open
 from os import path
+
+from setuptools import find_packages, setup
 
 here = path.abspath(path.dirname(__file__))
 
@@ -23,12 +25,40 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     keywords='binary parser disassembler',
-    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    packages=find_packages(exclude=[
+        'contrib', 'docs', 'docs.*', 'tests', 'tests.*',
+    ]),
     install_requires=[],
-    extras_require={
-        'dev': ['check-manifest', 'flake8'],
-        'test': ['coverage'],
-    },
+    setup_requires=[
+        'docutils',
+        'pytest-runner',
+    ],
+    tests_require=[
+        'pytest',
+        'pytest-cov',
+        'pytest-flake8',
+        'pytest-sugar',
+        # Detects misc bad ideas.
+        'flake8-bugbear',
+        # Detects shadowing builtins.
+        'flake8-builtins',
+        # Ensures a trailing comma on multiline lists etc.
+        'flake8-commas',
+        # Detects things that should be comprehensions.
+        'flake8-comprehensions',
+        # Detects leftover debugger breakpoints.
+        'flake8-debugger',
+        # Validates import ordering.
+        'flake8-import-order',
+        # Detects invalid escape sequences (eg. "\c").
+        'flake8-invalid-escape-sequences',
+        # Detects leftover print calls.
+        'flake8-print',
+        # Ensures docstrings are correctly-formatted ReST.
+        'flake8-rst-docstrings',
+        # Checks PEP8-conforming naming conventions (snake-case, etc.)
+        'pep8-naming',
+    ],
     package_data={
         'binflakes': [],
     },

@@ -409,7 +409,8 @@ class BinArray:
             res[idx] = cur
         return res
 
-    def repack_source_required(src_width, to_width, length, *, start_bit=0):
+    def repack_source_required(src_width, to_width, length, *,  # noqa: N805
+                               start_bit=0):
         """Calculates how many source words would be read for an invocation of
         repack with a given length, including possible partial words at
         the beginning and the end of the repack source.  This can be called
@@ -435,8 +436,8 @@ class BinArray:
             raise ValueError('start bit must be in [0, src_width)')
         return BinInt(start_bit + to_width * length).ceildiv(src_width)
 
-    def repack_data_available(src_width, to_width, *, src_length=None,
-                              start=None, start_bit=0):
+    def repack_data_available(src_width, to_width, *,  # noqa: N805
+                              src_length=None, start=None, start_bit=0):
         """Calculates the maximum number of words that can be requested
         from a repack invocation with the given settings.
 

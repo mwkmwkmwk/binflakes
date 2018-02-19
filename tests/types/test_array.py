@@ -1,11 +1,11 @@
-import unittest
-import pytest
 import random
+
+import pytest
 
 from binflakes.types import BinArray, BinWord
 
 
-class TestBinArray(unittest.TestCase):
+class TestBinArray:
     def test_construct(self):
         a = BinArray(width=12)
         assert len(a) == 0
@@ -303,7 +303,7 @@ class TestBinArray(unittest.TestCase):
         assert a * 1 == a
         assert a * 2 == BinArray([0x123, 0x456, 0x123, 0x456], width=13)
         assert 3 * a == BinArray([
-            0x123, 0x456, 0x123, 0x456, 0x123, 0x456
+            0x123, 0x456, 0x123, 0x456, 0x123, 0x456,
         ], width=13)
         with pytest.raises(ValueError):
             -1 * a

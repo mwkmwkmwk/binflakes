@@ -1,10 +1,9 @@
-import unittest
 import pytest
 
 from binflakes.types import BinWord, BinInt
 
 
-class TestBinInt(unittest.TestCase):
+class TestBinInt:
     def test_construct(self):
         a = BinInt(12)
         assert a == 12
