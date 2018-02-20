@@ -104,7 +104,10 @@ RE_BINARRAY_ITEM = {
         (?P<whitespace>[ \t\r\n\f]+) |
         (?P<line_comment>\# .*$) |
         (?P<rparen>\)) |
-        (?P<digits>-?[0-9]+)
+        (?P<digits>
+            -? [1-9][0-9]* |
+            -? 0
+        )
     ''', re.VERBOSE),
     16: re.compile(r'''
         (?P<whitespace>[ \t\r\n\f]+) |

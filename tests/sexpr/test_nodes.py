@@ -3,31 +3,31 @@ import pytest
 from binflakes.types import BinInt, BinWord, BinArray
 from binflakes.sexpr.symbol import Symbol
 from binflakes.sexpr.nodes import (
-    NodeList, NodeSymbol, NodeNil, NodeBool, NodeInt, NodeWord, NodeArray,
-    NodeString, make_node,
+    ListNode, SymbolNode, NilNode, BoolNode, IntNode, WordNode, ArrayNode,
+    StringNode, make_node,
 )
 
 
 class TestNodes:
     def test_list(self):
-        a = NodeList([NodeNil(), NodeBool(True), NodeList([]),
-                      NodeInt(BinInt(123))])
+        a = ListNode([NilNode(), BoolNode(True), ListNode([]),
+                      IntNode(BinInt(123))])
         assert str(a) == '(@nil @true () 123)'
         with pytest.raises(TypeError):
-            NodeList([123])
+            ListNode([123])
         with pytest.raises(TypeError):
-            NodeList('abc')
+            ListNode('abc')
         b = make_node([None, True, (), 123])
         assert a == b
 
     def test_symbol(self):
-        a = NodeSymbol(Symbol('abc'))
+        a = SymbolNode(Symbol('abc'))
         assert str(a) == 'abc'
         b = make_node(Symbol('abc'))
         assert a == b
 
     def test_nil(self):
-        a = NodeNil()
+        a = NilNode()
         assert str(a) == '@nil'
         b = make_node(None)
         assert a == b
@@ -37,7 +37,7 @@ class TestNodes:
         (False, '@false'),
     ])
     def test_bool(self, val, res):
-        a = NodeBool(val)
+        a = BoolNode(val)
         assert str(a) == res
         b = make_node(val)
         assert a == b
@@ -47,7 +47,7 @@ class TestNodes:
         (0x456, '1110'),
     ])
     def test_int(self, val, res):
-        a = NodeInt(BinInt(val))
+        a = IntNode(BinInt(val))
         assert str(a) == res
         b = make_node(val)
         assert a == b
@@ -57,7 +57,7 @@ class TestNodes:
         (BinWord(0, 0), '0\'0x0'),
     ])
     def test_word(self, val, res):
-        a = NodeWord(val)
+        a = WordNode(val)
         assert str(a) == res
         b = make_node(val)
         assert a == b
@@ -68,13 +68,13 @@ class TestNodes:
         (BinArray(width=123), '123\'0x()'),
     ])
     def test_array(self, val, res):
-        a = NodeArray(val)
+        a = ArrayNode(val)
         assert str(a) == res
         b = make_node(val)
         assert a == b
 
     def test_string(self):
-        a = NodeString('\a\bcd\x1b\f')
+        a = StringNode('\a\bcd\x1b\f')
         assert str(a) == '"\\a\\bcd\\e\\f"'
         b = make_node('\a\bcd\x1b\f')
         assert a == b

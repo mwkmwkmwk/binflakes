@@ -11,8 +11,8 @@ class Node:
     """Represents a parsed S-expression node.  Abstract base class."""
 
 
-def _location_attr():
-    """Makes a location argument.  Not included in the base class, so that
+def _location_attrib():
+    """Makes a location attribute.  Not included in the base class, so that
     it comes last and can be easily skipped in __init__.
     """
     return attrib(validator=optional(instance_of(TextLocationRange)),
@@ -20,11 +20,11 @@ def _location_attr():
 
 
 @attrs(slots=True)
-class NodeList(Node):
+class ListNode(Node):
     """Represents a list S-expression."""
 
     items = attrib()
-    location = _location_attr()
+    location = _location_attrib()
 
     @items.validator
     def _items_check(self, attribute, value):
@@ -40,106 +40,106 @@ class NodeList(Node):
 
 
 @attrs(slots=True)
-class NodeSymbol(Node):
+class SymbolNode(Node):
     """Represents a symbol S-expression."""
 
     value = attrib(validator=instance_of(Symbol))
-    location = _location_attr()
+    location = _location_attrib()
 
     def __str__(self):
         return str(self.value)
 
 
 @attrs(slots=True)
-class NodeNil(Node):
+class NilNode(Node):
     """Represents a nil S-expression."""
 
     value = None
-    location = _location_attr()
+    location = _location_attrib()
 
     def __str__(self):
         return '@nil'
 
 
 @attrs(slots=True)
-class NodeBool(Node):
+class BoolNode(Node):
     """Represents a bool S-expression."""
 
     value = attrib(validator=instance_of(bool))
-    location = _location_attr()
+    location = _location_attrib()
 
     def __str__(self):
         return '@true' if self.value else '@false'
 
 
 @attrs(slots=True)
-class NodeInt(Node):
+class IntNode(Node):
     """Represents an int S-expression."""
 
     value = attrib(validator=instance_of(BinInt))
-    location = _location_attr()
+    location = _location_attrib()
 
     def __str__(self):
         return str(self.value)
 
 
 @attrs(slots=True)
-class NodeWord(Node):
+class WordNode(Node):
     """Represents a word S-expression."""
 
     value = attrib(validator=instance_of(BinWord))
-    location = _location_attr()
+    location = _location_attrib()
 
     def __str__(self):
         return str(self.value)
 
 
 @attrs(slots=True)
-class NodeArray(Node):
+class ArrayNode(Node):
     """Represents an array S-expression."""
 
     value = attrib(validator=instance_of(BinArray))
-    location = _location_attr()
+    location = _location_attrib()
 
     def __str__(self):
         return str(self.value)
 
 
 @attrs(slots=True)
-class NodeString(Node):
+class StringNode(Node):
     """Represents a string S-expression."""
 
     value = attrib(validator=instance_of(str))
-    location = _location_attr()
+    location = _location_attrib()
 
     def __str__(self):
         return escape_string(self.value)
 
 
 def make_node(val, loc=None):
-    """Converts a bare python value to a corresponding Node, recursively
+    """Converts a bare Python value to a corresponding Node, recursively
     if needed.
     """
     if isinstance(val, Node):
         return val
     if isinstance(val, Symbol):
-        return NodeSymbol(val, loc)
+        return SymbolNode(val, loc)
     if val is None:
-        return NodeNil(loc)
+        return NilNode(loc)
     if isinstance(val, bool):
-        return NodeBool(val, loc)
+        return BoolNode(val, loc)
     if isinstance(val, (BinInt, int)):
-        return NodeInt(BinInt(val), loc)
+        return IntNode(BinInt(val), loc)
     if isinstance(val, BinWord):
-        return NodeWord(val, loc)
+        return WordNode(val, loc)
     if isinstance(val, BinArray):
-        return NodeArray(val, loc)
+        return ArrayNode(val, loc)
     if isinstance(val, str):
-        return NodeString(val, loc)
+        return StringNode(val, loc)
     if isinstance(val, (list, tuple)):
         val = [
             make_node(x)
             for x in val
         ]
-        return NodeList(val, loc)
+        return ListNode(val, loc)
     raise TypeError('cannot serialize to S-expr')

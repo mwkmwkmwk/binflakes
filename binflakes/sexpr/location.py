@@ -17,6 +17,8 @@ class TextLocationSingle:
         """Returns a TextLocationRange corresponding to the range between
         given two single locations.
         """
+        assert self.filename == other.filename
+        assert (self.line, self.column) <= (other.line, other.column)
         return TextLocationRange(
             self.filename, self.line, self.column,
             other.line, other.column - 1,
@@ -25,7 +27,7 @@ class TextLocationSingle:
 
 @attrs(slots=True)
 class TextLocationRange:
-    """Represents a range of locations in the input."""
+    """Represents a range of locations in one input file."""
     filename = attrib(validator=instance_of(str))
     start_line = attrib(validator=instance_of(int))
     start_column = attrib(validator=instance_of(int))

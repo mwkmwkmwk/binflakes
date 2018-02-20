@@ -5,6 +5,7 @@ from binflakes.sexpr.string import escape_string
 
 class TestString:
     @pytest.mark.parametrize(('orig', 'escaped'), [
+        ('', '""'),
         ('abc', '"abc"'),
         ('abc "def" ghi', '"abc \\"def\\" ghi"'),
         ('abc \\ def', '"abc \\\\ def"'),
