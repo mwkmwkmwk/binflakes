@@ -66,10 +66,22 @@ class TestRead:
         ('"\\U10234567"', StringNode, '\U0010234567'),
     ])
     def test_atom(self, s, t, v):
+        # on its own
         res = read_string(s)
         assert len(res) == 1
         assert isinstance(res[0], t)
         assert res[0].value == v
+        # surrounded by whitespace
+        res = read_string(f' {s} ')
+        assert len(res) == 1
+        assert isinstance(res[0], t)
+        assert res[0].value == v
+        # surrounded by parens
+        res = read_string(f'({s})')
+        assert len(res) == 1
+        assert isinstance(res[0], ListNode)
+        assert isinstance(res[0].items[0], t)
+        assert res[0].items[0].value == v
 
     @pytest.mark.parametrize(('s', 'e'), [
         ('1abc', 'no whitespace'),
@@ -86,10 +98,11 @@ class TestRead:
         ('12\'0x(-123-456)', 'no whitespace'),
         ('12\'0x(-1001)', 'value out of range'),
         ('12\'0x(1000)', 'value out of range'),
-        ('12\'0x(12z)', 'unknown binarray item'),
+        ('12\'0x(12z)', 'no whitespace'),
         ('12\'(0123)', 'no whitespace'),
         ('12\'0x(', 'EOF while in BINARRAY state'),
         ('12\'0x(123', 'EOF while in BINARRAY state'),
+        ('12\'(@true)', 'unknown binarray item'),
         ('12\'"abc', 'EOF while in STRING state'),
         ('"abc', 'EOF while in STRING state'),
         ('"', 'EOF while in STRING state'),
@@ -107,7 +120,6 @@ class TestRead:
         ('()()', 'no whitespace'),
         ('##', 'unclosed S-expr comment'),
         ('(abc ##) def', 'unclosed S-expr comment'),
-        ('##abc', 'no whitespace'),
     ])
     def test_fails(self, s, e):
         with pytest.raises(ReadError) as ei:
@@ -122,7 +134,7 @@ class TestRead:
             ]),
             SymbolNode(Symbol('ghi')),
         ]),
-        ('(abc def (ghi ## jkl) ## (mno ## pqr stq) uvw)', [
+        ('(abc def (ghi ##jkl) ##(mno ## pqr stq) uvw)', [
             ListNode([
                 SymbolNode(Symbol('abc')),
                 SymbolNode(Symbol('def')),

@@ -52,34 +52,52 @@ class StackEntryComment:
 
 
 RE_TOKEN = re.compile(r'''
+    # Any amount of whitespace.
     (?P<whitespace>[ \t\r\n\f]+) |
+    # Line comment (hash followed by space).
     (?P<line_comment>\#\ .*$) |
+    # Left paren.
     (?P<lparen>\() |
-    (?P<rparen>\)) |
-    (?P<bool_value>@true|@false) |
-    (?P<nil_value>@nil) |
-    (?P<string_width>[0-9]+)'" |
+    # Start of string (switches parser to STRING state).
+    (?:(?P<string_width>[0-9]+)')? (?P<start_quote>") |
+    # Start of BinArray (switches parser to BINARRAY state).
     (?P<array_width>[0-9]+)'(?P<array_base>0[box])?\( |
-    (?:(?P<word_width>[0-9]+)')? (?P<int_or_word>
-        -? 0b [0-1]+ |
-        -? 0o [0-7]+ |
-        -? 0x [0-9a-fA-F]+ |
-        -? [1-9][0-9]* |
-        -? 0
-    ) |
-    (?P<symbol>
-        [a-zA-Z*+=<>!?/.$%_][0-9a-zA-Z*+=<>!?/.$%_-]* |
-        -[a-zA-Z*+=<>!?/.$%_-][0-9a-zA-Z*+=<>!?/.$%_-]* |
-        -
-    ) |
-    (?P<sexpr_comment>\#\#) |
-    (?P<start_quote>")
+    # These tokens must be followed by whitespace, end of line,
+    # or a right paren.
+    (?:
+        # A right paren.
+        (?P<rparen>\)) |
+        # The singletons.
+        (?P<nil_value>@nil) |
+        (?P<bool_value>@true|@false) |
+        # Ints and words.
+        (?:(?P<word_width>[0-9]+)')? (?P<int_or_word>
+            -? 0b [0-1]+ |
+            -? 0o [0-7]+ |
+            -? 0x [0-9a-fA-F]+ |
+            -? [1-9][0-9]* |
+            -? 0
+        ) |
+        # Symbols.
+        (?P<symbol>
+            [a-zA-Z*+=<>!?/.$%_][0-9a-zA-Z*+=<>!?/.$%_-]* |
+            -[a-zA-Z*+=<>!?/.$%_-][0-9a-zA-Z*+=<>!?/.$%_-]* |
+            -
+        )
+    )(?= $ | [ \t\r\n\f)] | (?P<ws_error>)) |
+    # S-expr comment.
+    (?P<sexpr_comment>\#\#)
 ''', re.VERBOSE)
 
 RE_STRING_ITEM = re.compile(r'''
-    (?P<end_quote>") |
+    # End of string (must be followed by whitespace, end of line,
+    # or right paren.
+    (?P<end_quote>") (?= $ | [ \t\r\n\f)] | (?P<ws_error>)) |
+    # Simple unescaped characters.
     (?P<raw_chars>[^\\"]+) |
+    # A single-character escape.
     \\(?P<simple_escape>[abtnfre\\"]) |
+    # A hex character escape.
     \\[xuU](?P<hex_code>
         (?<=x)[0-9a-fA-F]{2} |
         (?<=u)[0-9a-fA-F]{4} |
@@ -87,34 +105,33 @@ RE_STRING_ITEM = re.compile(r'''
     )
 ''', re.VERBOSE)
 
+
+# Patterns common to all BINARRAY bases.
+def _re_binarray_item(digits):
+    return re.compile(r'''
+        # Any amount of whitespace.
+        (?P<whitespace>[ \t\r\n\f]+) |
+        # Line comment.
+        (?P<line_comment>\# .*$) |
+        # These tokens must be followed by whitespace, end of line,
+        # or a right paren.
+        (?:
+            (?P<rparen>\)) |
+            ''' + digits + r'''
+        ) (?= $ | [ \t\r\n\f)] | (?P<ws_error>))
+    ''', re.VERBOSE)
+
+
 RE_BINARRAY_ITEM = {
-    2: re.compile(r'''
-        (?P<whitespace>[ \t\r\n\f]+) |
-        (?P<line_comment>\# .*$) |
-        (?P<rparen>\)) |
-        (?P<digits>-?[0-1]+)
-    ''', re.VERBOSE),
-    8: re.compile(r'''
-        (?P<whitespace>[ \t\r\n\f]+) |
-        (?P<line_comment>\# .*$) |
-        (?P<rparen>\)) |
-        (?P<digits>-?[0-7]+)
-    ''', re.VERBOSE),
-    10: re.compile(r'''
-        (?P<whitespace>[ \t\r\n\f]+) |
-        (?P<line_comment>\# .*$) |
-        (?P<rparen>\)) |
+    2: _re_binarray_item(r'''(?P<digits>-?[0-1]+)'''),
+    8: _re_binarray_item(r'''(?P<digits>-?[0-7]+)'''),
+    10: _re_binarray_item(r'''
         (?P<digits>
             -? [1-9][0-9]* |
             -? 0
         )
-    ''', re.VERBOSE),
-    16: re.compile(r'''
-        (?P<whitespace>[ \t\r\n\f]+) |
-        (?P<line_comment>\# .*$) |
-        (?P<rparen>\)) |
-        (?P<digits>-?[0-9a-fA-F]+)
-    ''', re.VERBOSE),
+    '''),
+    16: _re_binarray_item(r'''(?P<digits>-?[0-9a-fA-F]+)'''),
 }
 
 
@@ -148,7 +165,6 @@ class Reader:
         """
         self.line += 1
         pos = 0
-        need_white = False
         while pos < len(line):
             loc_start = TextLocationSingle(self.filename, self.line, pos + 1)
             if self.state is State.NORMAL:
@@ -168,13 +184,10 @@ class Reader:
             pos = match.end()
             loc_end = TextLocationSingle(self.filename, self.line, pos + 1)
             loc = loc_start - loc_end
+            if match['ws_error'] is not None:
+                raise ReadError(f'{loc_end}: no whitespace after token')
             if self.state is State.NORMAL:
                 # Normal state -- read tokens.
-                if (need_white and match['whitespace'] is None and
-                        match['rparen'] is None):
-                    raise ReadError(f'{loc}: no whitespace between tokens')
-                need_white = (match['whitespace'] is None and
-                              match['lparen'] is None)
                 if match['lparen'] is not None:
                     self.stack.append(StackEntryList(loc_start, []))
                 elif match['rparen'] is not None:
@@ -184,11 +197,6 @@ class Reader:
                     if not isinstance(top, StackEntryList):
                         top.raise_unclosed_error()
                     yield from self._feed_node(top.items, top.start - loc_end)
-                elif match['start_quote'] is not None:
-                    self.state = State.STRING
-                    self.token_start = loc_start
-                    self.string_buffer = StringIO()
-                    self.binarray_width = None
                 elif match['symbol'] is not None:
                     value = Symbol(match['symbol'])
                     yield from self._feed_node(value, loc)
@@ -220,17 +228,18 @@ class Reader:
                     self.binarray_width = int(match['array_width'])
                     self.token_start = loc_start
                     self.state = State.BINARRAY
-                    need_white = False
-                elif match['string_width'] is not None:
-                    self.binarray_width = int(match['string_width'])
+                elif match['start_quote'] is not None:
+                    self.state = State.STRING
                     self.token_start = loc_start
                     self.string_buffer = StringIO()
-                    self.state = State.STRING
+                    if match['string_width'] is not None:
+                        self.binarray_width = int(match['string_width'])
+                    else:
+                        self.binarray_width = None
             elif self.state is State.STRING:
                 # Inside a string.
                 if match['end_quote'] is not None:
                     self.state = State.NORMAL
-                    need_white = True
                     value = self.string_buffer.getvalue()
                     loc = self.token_start - loc_end
                     if self.binarray_width is not None:
@@ -263,15 +272,12 @@ class Reader:
                     loc = self.token_start - loc_end
                     yield from self._feed_node(value, loc)
                 elif match['digits'] is not None:
-                    if need_white:
-                        raise ReadError(f'{loc}: no whitespace between tokens')
                     value = int(match['digits'], self.binarray_base)
                     if value < 0:
                         value += 1 << self.binarray_width
                     if value not in range(1 << self.binarray_width):
                         raise ReadError(f'{loc}: word value out of range')
                     self.binarray_data.append(value)
-                need_white = match['whitespace'] is None
             else:
                 assert 0
 
