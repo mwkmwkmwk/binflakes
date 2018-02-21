@@ -7,6 +7,7 @@ from .string import escape_string
 from .symbol import Symbol
 
 
+@attrs(slots=True)
 class Node:
     """Represents a parsed S-expression node.  Abstract base class."""
 
