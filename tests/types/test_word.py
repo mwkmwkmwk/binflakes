@@ -61,22 +61,22 @@ class TestBinWord:
 
     def test_display(self):
         a = BinWord(0, 0)
-        assert str(a) == '#0x0'
+        assert str(a) == '0\'0x0'
         assert repr(a) == 'BinWord(0, 0x0)'
         a = BinWord(1, 1)
-        assert str(a) == '#1x1'
+        assert str(a) == '1\'0x1'
         assert repr(a) == 'BinWord(1, 0x1)'
         a = BinWord(4, 0xd)
-        assert str(a) == '#4xd'
+        assert str(a) == '4\'0xd'
         assert repr(a) == 'BinWord(4, 0xd)'
         a = BinWord(13, 0x1234)
-        assert str(a) == '#13x1234'
+        assert str(a) == '13\'0x1234'
         assert repr(a) == 'BinWord(13, 0x1234)'
         a = BinWord(13, 0)
-        assert str(a) == '#13x0000'
+        assert str(a) == '13\'0x0000'
         assert repr(a) == 'BinWord(13, 0x0000)'
         a = BinWord(12, 0)
-        assert str(a) == '#12x000'
+        assert str(a) == '12\'0x000'
         assert repr(a) == 'BinWord(12, 0x000)'
 
     def test_eq(self):

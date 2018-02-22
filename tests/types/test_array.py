@@ -84,26 +84,26 @@ class TestBinArray:
     def test_display(self):
         a = BinArray(width=0)
         assert repr(a) == 'BinArray([], width=0)'
-        assert str(a) == '#0x()'
+        assert str(a) == '0\'0x()'
         a = BinArray(width=1)
         assert repr(a) == 'BinArray([], width=1)'
-        assert str(a) == '#1x()'
+        assert str(a) == '1\'0x()'
         a = BinArray(width=13)
         assert repr(a) == 'BinArray([], width=13)'
-        assert str(a) == '#13x()'
+        assert str(a) == '13\'0x()'
         a = BinArray(width=0, length=3)
         assert repr(a) == 'BinArray([0x0, 0x0, 0x0], width=0)'
-        assert str(a) == '#0x(0 0 0)'
+        assert str(a) == '0\'0x(0 0 0)'
         a = BinArray([1, 0, 1, 1], width=1)
         assert repr(a) == 'BinArray([0x1, 0x0, 0x1, 0x1], width=1)'
-        assert str(a) == '#1x(1 0 1 1)'
+        assert str(a) == '1\'0x(1 0 1 1)'
         a = BinArray([0x1234, 0x567, 0x89a, 0xbcd], width=13)
         assert (repr(a) ==
                 'BinArray([0x1234, 0x0567, 0x089a, 0x0bcd], width=13)')
-        assert str(a) == '#13x(1234 0567 089a 0bcd)'
+        assert str(a) == '13\'0x(1234 0567 089a 0bcd)'
         a = BinArray([0x123, 0x456, 0x789, 0xabc], width=12)
         assert repr(a) == 'BinArray([0x123, 0x456, 0x789, 0xabc], width=12)'
-        assert str(a) == '#12x(123 456 789 abc)'
+        assert str(a) == '12\'0x(123 456 789 abc)'
 
     def test_eq(self):
         a = BinArray([0x1, 0x2, 0x3], width=2)
