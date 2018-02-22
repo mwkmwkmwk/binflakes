@@ -16,9 +16,6 @@ class TestRead:
     @pytest.mark.parametrize(('s', 't', 'v'), [
         ('abcDEF', SymbolNode, Symbol('abcDEF')),
         ('-', SymbolNode, Symbol('-')),
-        ('-a', SymbolNode, Symbol('-a')),
-        ('--a', SymbolNode, Symbol('--a')),
-        ('--0', SymbolNode, Symbol('--0')),
         ('@nil', NilNode, None),
         ('@false', BoolNode, False),
         ('@true', BoolNode, True),
@@ -86,6 +83,8 @@ class TestRead:
     @pytest.mark.parametrize(('s', 'e'), [
         ('1abc', 'no whitespace'),
         ('-1abc', 'no whitespace'),
+        ('-abc', 'no whitespace'),
+        ('--', 'no whitespace'),
         ('@true@true', 'no whitespace'),
         ('@truer', 'no whitespace'),
         ('@falser', 'no whitespace'),
@@ -115,8 +114,8 @@ class TestRead:
         ('"\\x1z"', 'unknown escape'),
         ('"\\u123z"', 'unknown escape'),
         ('"\\U12345z"', 'unknown escape'),
-        ('(', 'unmatched open paren'),
-        (')', 'unmatched close paren'),
+        ('(', 'unmatched opening paren'),
+        (')', 'unmatched closing paren'),
         ('()()', 'no whitespace'),
         ('##', 'unclosed S-expr comment'),
         ('(abc ##) def', 'unclosed S-expr comment'),
@@ -142,6 +141,20 @@ class TestRead:
                     SymbolNode(Symbol('ghi')),
                 ]),
                 SymbolNode(Symbol('uvw')),
+            ]),
+        ]),
+        ('''
+            (abc def (ghi # jkl mno )(
+            pqr) # (mno ## pqr stq) uvw)
+            )
+        ''', [
+            ListNode([
+                SymbolNode(Symbol('abc')),
+                SymbolNode(Symbol('def')),
+                ListNode([
+                    SymbolNode(Symbol('ghi')),
+                    SymbolNode(Symbol('pqr')),
+                ]),
             ]),
         ]),
     ])

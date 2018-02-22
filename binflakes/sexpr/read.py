@@ -36,7 +36,7 @@ class StackEntryList:
     items = attrib(validator=instance_of(list))
 
     def raise_unclosed_error(self):
-        raise ReadError(f'{self.start}: unmatched open paren')
+        raise ReadError(f'{self.start}: unmatched opening paren')
 
 
 @attrs(slots=True)
@@ -80,8 +80,7 @@ RE_TOKEN = re.compile(r'''
         ) |
         # Symbols.
         (?P<symbol>
-            [a-zA-Z*+=<>!?/.$%_][0-9a-zA-Z*+=<>!?/.$%_-]* |
-            -[a-zA-Z*+=<>!?/.$%_-][0-9a-zA-Z*+=<>!?/.$%_-]* |
+            [a-zA-Z*+=<>!?/$%_][0-9a-zA-Z*+=<>!?/$%_-]* |
             -
         )
     )(?= $ | [ \t\r\n\f)] | (?P<ws_error>)) |
@@ -192,7 +191,7 @@ class Reader:
                     self.stack.append(StackEntryList(loc_start, []))
                 elif match['rparen'] is not None:
                     if not self.stack:
-                        raise ReadError(f'{loc}: unmatched close paren')
+                        raise ReadError(f'{loc}: unmatched closing paren')
                     top = self.stack.pop()
                     if not isinstance(top, StackEntryList):
                         top.raise_unclosed_error()

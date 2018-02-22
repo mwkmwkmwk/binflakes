@@ -14,8 +14,9 @@ class TextLocationSingle:
         return f'{self.filename}:{self.line}:{self.column}'
 
     def __sub__(self, other):
-        """Returns a TextLocationRange corresponding to the range between
-        given two single locations.
+        """Returns a TextLocationRange corresponding to the range starting
+        from the first single location (included) until the second single
+        location (excluded).
         """
         assert self.filename == other.filename
         assert (self.line, self.column) <= (other.line, other.column)
@@ -27,7 +28,9 @@ class TextLocationSingle:
 
 @attrs(slots=True)
 class TextLocationRange:
-    """Represents a range of locations in one input file."""
+    """Represents a range of locations in one input file, with both endpoints
+    included.
+    """
     filename = attrib(validator=instance_of(str))
     start_line = attrib(validator=instance_of(int))
     start_column = attrib(validator=instance_of(int))
