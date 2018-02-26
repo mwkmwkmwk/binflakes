@@ -21,7 +21,7 @@ def _unwrap(value, location=None):
     is a Node instance, extracts raw Python value and location from it,
     and returns them as a tuple.  Otherwise, ensures that ``value`` is
     of a type representable by S-expressions and returns it along with
-    explicitely-passed location, if any.
+    explicitly-passed location, if any.
     """
     if isinstance(value, Node) and location is not None:
         raise TypeError(
@@ -85,7 +85,7 @@ class Node:
 
 @attrs(slots=True, init=False)
 class AtomNode(Node):
-    """Represents a parsed atomic S-expression node (ie. anything but a list).
+    """Represents a parsed atomic S-expression node (i.e. anything but a list).
     Abstract base class.  Subclasses need to define ``value_type`` class
     attribute.  No new direct subclasses should be defined by the user
     (all types need direct support from the base machinery), but the derived
@@ -413,7 +413,7 @@ class AlternativesNode(metaclass=AlternativesMeta):
     the constructor of the matching one, if any.
 
     If all involved node types are already defined on subclass creation,
-    the list of supported node types can be set through the ``attributes``
+    the list of supported node types can be set through the ``alternatives``
     class attribute::
 
         class MyAlternativesNode(AlternativesNode):
@@ -436,6 +436,18 @@ class AlternativesNode(metaclass=AlternativesMeta):
             MyNode,
             AnotherNode,
         ])
+
+    The alternatives specified must be mutually exclusive, as follows:
+
+    - There must be at most one alternative for each atom type.
+    - There must be at most one of the following:
+
+      - A ListNode subtype.
+      - Any number of FormNode subtypes, with distinct symbols.
+
+    - If any AlternativeNode subclass is specified in alternatives, it's
+      as if all alternatives of that class were specified directly in its
+      place.
     """
 
     def __new__(cls, value, location=None):

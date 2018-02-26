@@ -135,6 +135,12 @@ class TestNodes:
         ('abc', IntNode),
         (13, StringNode),
         (13, GenericListNode),
+        (False, NilNode),
+        (0, NilNode),
+        ((), NilNode),
+        (None, BoolNode),
+        (None, IntNode),
+        (None, GenericListNode),
     ])
     def test_wrong_type(self, val, node_type):
         with pytest.raises(ConvertError):
