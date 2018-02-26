@@ -9,7 +9,7 @@ from binflakes.types import BinWord, BinArray
 from .string import ESCAPE_TO_CHAR
 from .symbol import Symbol
 from .location import TextLocationSingle, TextLocationRange
-from .nodes import make_node
+from .nodes import GenericNode
 
 
 class ReadError(Exception):
@@ -287,7 +287,7 @@ class Reader:
         simply yields the passed expression.  Otherwise, it appends it
         to whatever is currently being parsed and yields nothing.
         """
-        node = make_node(value, loc)
+        node = GenericNode(value, loc)
         if not self.stack:
             yield node
         else:

@@ -5,8 +5,8 @@ import pytest
 from binflakes.types import BinInt, BinWord, BinArray
 from binflakes.sexpr.symbol import Symbol
 from binflakes.sexpr.nodes import (
-    ListNode, SymbolNode, NilNode, BoolNode, IntNode, WordNode, ArrayNode,
-    StringNode, make_node,
+    GenericListNode, SymbolNode, NilNode, BoolNode, IntNode, WordNode,
+    ArrayNode, StringNode, GenericNode,
 )
 from binflakes.sexpr.read import read_string, ReadError
 from binflakes.sexpr.location import TextLocationRange
@@ -76,7 +76,7 @@ class TestRead:
         # surrounded by parens
         res = read_string(f'({s})')
         assert len(res) == 1
-        assert isinstance(res[0], ListNode)
+        assert isinstance(res[0], GenericListNode)
         assert isinstance(res[0].items[0], t)
         assert res[0].items[0].value == v
 
@@ -127,17 +127,17 @@ class TestRead:
 
     @pytest.mark.parametrize(('s', 'v'), [
         ('(abc def) ghi', [
-            ListNode([
+            GenericListNode([
                 SymbolNode(Symbol('abc')),
                 SymbolNode(Symbol('def')),
             ]),
             SymbolNode(Symbol('ghi')),
         ]),
         ('(abc def (ghi ##jkl) ##(mno ## pqr stq) uvw)', [
-            ListNode([
+            GenericListNode([
                 SymbolNode(Symbol('abc')),
                 SymbolNode(Symbol('def')),
-                ListNode([
+                GenericListNode([
                     SymbolNode(Symbol('ghi')),
                 ]),
                 SymbolNode(Symbol('uvw')),
@@ -148,10 +148,10 @@ class TestRead:
             pqr) # (mno ## pqr stq) uvw)
             )
         ''', [
-            ListNode([
+            GenericListNode([
                 SymbolNode(Symbol('abc')),
                 SymbolNode(Symbol('def')),
-                ListNode([
+                GenericListNode([
                     SymbolNode(Symbol('ghi')),
                     SymbolNode(Symbol('pqr')),
                 ]),
@@ -200,7 +200,7 @@ class TestRead:
         ''.join(chr(x) for x in range(0xff, 0x110000, 0x100)),
     ])
     def test_roundtrip(self, t):
-        n = make_node(t)
+        n = GenericNode(t)
         assert read_string(str(n)) == [n]
 
     def test_location(self):
