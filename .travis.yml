@@ -11,5 +11,6 @@ script:
   - check-manifest
   - python setup.py check -m -r -s
   - python setup.py test
+  - python setup.py build_sphinx -W
 after_success:
   - coveralls
