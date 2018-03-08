@@ -72,11 +72,25 @@ RE_TOKEN = re.compile(r'''
         (?P<bool_value>@true|@false) |
         # Ints and words.
         (?:(?P<word_width>[0-9]+)')? (?P<int_or_word>
-            -? 0b [0-1]+ |
-            -? 0o [0-7]+ |
-            -? 0x [0-9a-fA-F]+ |
-            -? [1-9][0-9]* |
-            -? 0
+            (?P<number>
+                -? 0b [0-1]+ |
+                -? 0o [0-7]+ |
+                -? 0x [0-9a-fA-F]+ |
+                -? [1-9][0-9]* |
+                -? 0
+            ) |
+            '(?:
+                # Simple unescaped character.
+                (?P<raw_char>[^\\']) |
+                # A single-character escape.
+                \\(?P<simple_escape>[abtnfre\\"]) |
+                # A hex character escape.
+                \\[xuU](?P<hex_code>
+                    (?<=x)[0-9a-fA-F]{2} |
+                    (?<=u)[0-9a-fA-F]{4} |
+                    (?<=U)[0-9a-fA-F]{6}
+                )
+            )'
         ) |
         # Symbols.
         (?P<symbol>
@@ -207,7 +221,19 @@ class Reader:
                 elif match['nil_value'] is not None:
                     yield from self._feed_node(None, loc)
                 elif match['int_or_word'] is not None:
-                    value = int(match['int_or_word'], 0)
+                    if match['number'] is not None:
+                        value = int(match['number'], 0)
+                    elif match['raw_char'] is not None:
+                        value = ord(match['raw_char'])
+                    elif match['simple_escape'] is not None:
+                        value = ord(ESCAPE_TO_CHAR[match['simple_escape']])
+                    elif match['hex_code'] is not None:
+                        value = int(match['hex_code'], 16)
+                        if value not in range(0x110000):
+                            raise ReadError(
+                                    f'{loc}: not a valid unicode codepoint')
+                    else:
+                        assert 0
                     if match['word_width'] is not None:
                         width = int(match['word_width'])
                         if value < 0:
