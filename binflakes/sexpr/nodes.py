@@ -391,7 +391,7 @@ class FormNode(Node):
         return f'({items})'
 
 
-class AlternativesMeta(type):
+class _AlternativesMeta(type):
     """A simple metaclass for AlternativesNode to make isinstance work.
     """
 
@@ -407,7 +407,7 @@ class AlternativesMeta(type):
         return False
 
 
-class AlternativesNode(metaclass=AlternativesMeta):
+class AlternativesNode(metaclass=_AlternativesMeta):
     """A base for making node pseudo-classes that, when "created", match
     the passed value to one of a given list of node subclasses and call
     the constructor of the matching one, if any.
@@ -485,7 +485,7 @@ class AlternativesNode(metaclass=AlternativesMeta):
         cls._form_types = {}
         cls._alternatives = []
         for alt in alternatives:
-            if isinstance(alt, AlternativesMeta):
+            if isinstance(alt, _AlternativesMeta):
                 cls._alternatives += alt._alternatives
             else:
                 cls._alternatives.append(alt)
