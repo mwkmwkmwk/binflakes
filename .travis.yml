@@ -6,10 +6,11 @@ python:
   - "nightly"
 install:
   - pip install --upgrade setuptools
-  - pip install . coveralls check-manifest
+  - pip install . coveralls check-manifest sphinx
 script:
   - check-manifest
   - python setup.py check -m -r -s
   - python setup.py test
+  - python setup.py build_sphinx -W
 after_success:
   - coveralls
